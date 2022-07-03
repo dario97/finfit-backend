@@ -1,9 +1,9 @@
 package main
 
 import (
-	"finfit/finfit-backend/infrastructure/datastore"
-	"finfit/finfit-backend/infrastructure/registry"
-	"finfit/finfit-backend/infrastructure/router"
+	"finfit/finfit-backend/src/infrastructure/datastore"
+	"finfit/finfit-backend/src/infrastructure/registry"
+	"finfit/finfit-backend/src/infrastructure/router"
 	"fmt"
 	"github.com/labstack/echo"
 	"log"
