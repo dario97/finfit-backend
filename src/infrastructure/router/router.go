@@ -1,7 +1,7 @@
 package router
 
 import (
-	"finfit/finfit-backend/src/interfaces/controller"
+	"finfit-backend/src/interfaces/controller"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 )

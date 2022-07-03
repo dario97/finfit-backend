@@ -1,11 +1,11 @@
 package test
 
 import (
-	"finfit/finfit-backend/src/domain/entities"
-	"finfit/finfit-backend/src/domain/use_cases/custom_errors"
-	"finfit/finfit-backend/src/domain/use_cases/service"
-	"finfit/finfit-backend/src/interfaces/controller"
-	"finfit/finfit-backend/src/test/mock/repository_mock"
+	"finfit-backend/src/domain/entities"
+	"finfit-backend/src/domain/use_cases/custom_errors"
+	"finfit-backend/src/domain/use_cases/service"
+	"finfit-backend/src/interfaces/controller"
+	"finfit-backend/src/test/mock/repository_mock"
 	"github.com/labstack/echo"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -41,7 +41,33 @@ func TestGivenAnExpenseToCreate_WhenCreate_ThenReturnStatusOkWithCreatedExpense(
 	}
 }
 
-func TestGivenThatExpenseServiceReturnInvalidExpenseTypeError_WhenCreate_ThenReturnErrorWithBadRequestStatus(t *testing.T) {
+func TestGivenAnExpenseToCreateWithoutDescription_WhenCreate_ThenReturnStatusOkWithCreatedExpense(t *testing.T) {
+	expenseServiceMock := repository_mock.NewExpenseServiceMock()
+	requestBody := `{"amount":100.2,"expense_date":"2022-03-15T10:04:05Z","expense_type":{"id":1,"name":"Delivery"}}`
+	c, rec := mockCreateExpenseRequest(requestBody)
+
+	expectedExpenseType := entities.NewExpenseTypeWithId(1, "Delivery")
+	expectedCreatedExpense := entities.NewExpenseWithId(1, 100.2,
+		time.Date(2022, time.March, 15, 10, 4, 5, 0, time.UTC),
+		"",
+		expectedExpenseType)
+	expectedResponseBody := "{\"id\":1,\"amount\":100.2,\"expense_date\":\"2022-03-15T10:04:05Z\",\"description\":\"\",\"expense_type\":{\"id\":1,\"name\":\"Delivery\"}}\n"
+
+	expenseServiceMock.On("Create", service.NewCreateExpenseCommand(100.2,
+		time.Date(2022, time.March, 15, 10, 4, 5, 0, time.UTC),
+		"",
+		entities.NewExpenseTypeWithId(1, "Delivery"),
+	)).Return(&expectedCreatedExpense, nil)
+
+	handler := controller.NewExpenseController(expenseServiceMock)
+
+	if assert.NoError(t, handler.Create(c)) {
+		assert.Equal(t, http.StatusCreated, rec.Code)
+		assert.Equal(t, expectedResponseBody, rec.Body.String())
+	}
+}
+
+func TestGivenAnInvalidExpenseType_WhenCreate_ThenReturnErrorWithBadRequestStatus(t *testing.T) {
 	expenseServiceMock := repository_mock.NewExpenseServiceMock()
 	requestBody := `{"amount":100.2,"description":"Lomitos","expense_date":"2022-03-15T10:04:05Z","expense_type":{"id":1,"name":"Delivery"}}`
 	c, rec := mockCreateExpenseRequest(requestBody)
@@ -61,7 +87,7 @@ func TestGivenThatExpenseServiceReturnInvalidExpenseTypeError_WhenCreate_ThenRet
 	assert.Equal(t, expectedResponseBody, rec.Body.String())
 }
 
-func TestGivenThatExpenseServiceReturnInternalError_WhenCreate_ThenReturnErrorWithInternalServerErrorStatus(t *testing.T) {
+func TestGivenAnUnexpectedError_WhenCreate_ThenReturnErrorWithInternalServerErrorStatus(t *testing.T) {
 	expenseServiceMock := repository_mock.NewExpenseServiceMock()
 	requestBody := `{"amount":100.2,"description":"Lomitos","expense_date":"2022-03-15T10:04:05Z","expense_type":{"id":1,"name":"Delivery"}}`
 	c, rec := mockCreateExpenseRequest(requestBody)
@@ -70,7 +96,7 @@ func TestGivenThatExpenseServiceReturnInternalError_WhenCreate_ThenReturnErrorWi
 		time.Date(2022, time.March, 15, 10, 4, 5, 0, time.UTC),
 		"Lomitos",
 		entities.NewExpenseTypeWithId(1, "Delivery"),
-	)).Return(nil, custom_errors.InternalError{Msg: "cagamo fuego"})
+	)).Return(nil, custom_errors.UnexpectedError{Msg: "cagamo fuego"})
 
 	handler := controller.NewExpenseController(expenseServiceMock)
 
@@ -81,36 +107,75 @@ func TestGivenThatExpenseServiceReturnInternalError_WhenCreate_ThenReturnErrorWi
 	assert.Equal(t, expectedResponseBody, rec.Body.String())
 }
 
-//
-//func TestGivenAnExpenseBodyWithoutAmount_WhenCreate_ThenReturnErrorWithBadRequestStatus(t *testing.T) {
-//	expenseJson := `{"description":"Lomitos","expense_date":"2022-03-15T10:04:05Z","expense_type":{"id":1,"name":"Delivery"}}`
-//	e := echo.New()
-//	req := httptest.NewRequest(http.MethodPost, "/expense", strings.NewReader(expenseJson))
-//	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-//	rec := httptest.NewRecorder()
-//	service := service2.GetExpenseService(repository_mock.NewExpenseRepositoryMock(errors.New("db error")))
-//	c := e.NewContext(req, rec)
-//	handler := controller.GetExpenseController(service)
-//
-//	handler.Create(c)
-//
-//	assert.Equal(t, http.StatusBadRequest, rec.Code)
-//}
-//
-//func TestGivenAnExpenseBodyWithoutExpenseType_WhenCreate_ThenReturnErrorWithBadRequestStatus(t *testing.T) {
-//	expenseJson := `{"amount":10.3,"description":"Lomitos","expense_date":"2022-03-15T10:04:05Z"}`
-//	e := echo.New()
-//	req := httptest.NewRequest(http.MethodPost, "/expense", strings.NewReader(expenseJson))
-//	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-//	rec := httptest.NewRecorder()
-//	service := service2.GetExpenseService(repository_mock.NewExpenseRepositoryMock(errors.New("db error")))
-//	c := e.NewContext(req, rec)
-//	handler := controller.GetExpenseController(service)
-//
-//	handler.Create(c)
-//
-//	assert.Equal(t, http.StatusBadRequest, rec.Code)
-//}
+func TestGivenAnExpenseWithoutAmount_WhenCreate_ThenReturnErrorWithBadRequestStatus(t *testing.T) {
+	expenseServiceMock := repository_mock.NewExpenseServiceMock()
+	requestBody := `{"description":"Lomitos","expense_date":"2022-03-15T10:04:05Z","expense_type":{"id":1,"name":"Delivery"}}`
+	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"CreateExpenseRequest.Amount\",\"validation_result\":\"required\"}]}\n"
+	c, rec := mockCreateExpenseRequest(requestBody)
+
+	handler := controller.NewExpenseController(expenseServiceMock)
+
+	handler.Create(c)
+
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Equal(t, expectedResponseBody, rec.Body.String())
+}
+
+func TestGivenAnExpenseWithoutExpenseDate_WhenCreate_ThenReturnErrorWithBadRequestStatus(t *testing.T) {
+	expenseServiceMock := repository_mock.NewExpenseServiceMock()
+	requestBody := `{"amount":100.2,"description":"Lomitos","expense_type":{"id":1,"name":"Delivery"}}`
+	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"CreateExpenseRequest.ExpenseDate\",\"validation_result\":\"required\"}]}\n"
+	c, rec := mockCreateExpenseRequest(requestBody)
+
+	handler := controller.NewExpenseController(expenseServiceMock)
+
+	handler.Create(c)
+
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Equal(t, expectedResponseBody, rec.Body.String())
+}
+
+func TestGivenAnExpenseWithoutExpenseType_WhenCreate_ThenReturnErrorWithBadRequestStatus(t *testing.T) {
+	expenseServiceMock := repository_mock.NewExpenseServiceMock()
+	requestBody := `{"amount":10.3,"description":"Lomitos","expense_date":"2022-03-15T10:04:05Z"}`
+	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"CreateExpenseRequest.ExpenseType\",\"validation_result\":\"required\"}]}\n"
+	c, rec := mockCreateExpenseRequest(requestBody)
+
+	handler := controller.NewExpenseController(expenseServiceMock)
+
+	handler.Create(c)
+
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Equal(t, expectedResponseBody, rec.Body.String())
+}
+
+func TestGivenAnExpenseWithoutExpenseTypeID_WhenCreate_ThenReturnErrorWithBadRequestStatus(t *testing.T) {
+	expenseServiceMock := repository_mock.NewExpenseServiceMock()
+	requestBody := `{"amount":100.2,"description":"Lomitos","expense_date":"2022-03-15T10:04:05Z","expense_type":{"name":"Delivery"}}`
+	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"CreateExpenseRequest.ExpenseType.ID\",\"validation_result\":\"required\"}]}\n"
+	c, rec := mockCreateExpenseRequest(requestBody)
+
+	handler := controller.NewExpenseController(expenseServiceMock)
+
+	handler.Create(c)
+
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Equal(t, expectedResponseBody, rec.Body.String())
+}
+
+func TestGivenAnExpenseWithoutExpenseTypeName_WhenCreate_ThenReturnErrorWithBadRequestStatus(t *testing.T) {
+	expenseServiceMock := repository_mock.NewExpenseServiceMock()
+	requestBody := `{"amount":100.2,"description":"Lomitos","expense_date":"2022-03-15T10:04:05Z","expense_type":{"id":1}}`
+	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"CreateExpenseRequest.ExpenseType.Name\",\"validation_result\":\"required\"}]}\n"
+	c, rec := mockCreateExpenseRequest(requestBody)
+
+	handler := controller.NewExpenseController(expenseServiceMock)
+
+	handler.Create(c)
+
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Equal(t, expectedResponseBody, rec.Body.String())
+}
 
 func mockCreateExpenseRequest(body string) (echo.Context, *httptest.ResponseRecorder) {
 	e := echo.New()

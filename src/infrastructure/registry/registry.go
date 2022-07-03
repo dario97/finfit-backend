@@ -1,7 +1,7 @@
 package registry
 
 import (
-	"finfit/finfit-backend/src/interfaces/controller"
+	"finfit-backend/src/interfaces/controller"
 	"github.com/jinzhu/gorm"
 )
 

@@ -2,10 +2,10 @@ package controller
 
 import (
 	"errors"
-	"finfit/finfit-backend/src/domain/entities"
-	"finfit/finfit-backend/src/domain/use_cases/custom_errors"
-	"finfit/finfit-backend/src/domain/use_cases/service"
-	"finfit/finfit-backend/src/interfaces/controller/dto"
+	"finfit-backend/src/domain/entities"
+	"finfit-backend/src/domain/use_cases/custom_errors"
+	"finfit-backend/src/domain/use_cases/service"
+	"finfit-backend/src/interfaces/controller/dto"
 	"github.com/go-playground/validator"
 	"github.com/labstack/echo"
 	"net/http"

@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"finfit/finfit-backend/src/domain/entities"
+	"finfit-backend/src/domain/entities"
 )
 
 type ExpenseRepository interface {

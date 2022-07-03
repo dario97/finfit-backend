@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"finfit/finfit-backend/domain/entities"
+	"finfit-backend/src/domain/entities"
 	"time"
 )
 

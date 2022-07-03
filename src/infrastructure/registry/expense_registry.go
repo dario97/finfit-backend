@@ -1,10 +1,10 @@
 package registry
 
 import (
-	repository2 "finfit/finfit-backend/src/domain/repository"
-	"finfit/finfit-backend/src/domain/use_cases/service"
-	"finfit/finfit-backend/src/infrastructure/repository"
-	"finfit/finfit-backend/src/interfaces/controller"
+	repository2 "finfit-backend/src/domain/repository"
+	"finfit-backend/src/domain/use_cases/service"
+	"finfit-backend/src/infrastructure/repository"
+	"finfit-backend/src/interfaces/controller"
 )
 
 func (r expenseRegistry) GetExpenseController() controller.ExpenseController {

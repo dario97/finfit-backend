@@ -1,6 +1,6 @@
 package repository
 
-import "finfit/finfit-backend/src/domain/entities"
+import "finfit-backend/src/domain/entities"
 
 type ExpenseTypeRepository interface {
 	FindById(id int64) (*entities.ExpenseType, error)

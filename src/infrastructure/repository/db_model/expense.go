@@ -1,7 +1,7 @@
 package db_model
 
 import (
-	"finfit/finfit-backend/src/domain/entities"
+	"finfit-backend/src/domain/entities"
 	"time"
 )
 

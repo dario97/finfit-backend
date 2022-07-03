@@ -1,7 +1,7 @@
 package repository_mock
 
 import (
-	"finfit/finfit-backend/src/domain/entities"
+	"finfit-backend/src/domain/entities"
 	"github.com/stretchr/testify/mock"
 )
 

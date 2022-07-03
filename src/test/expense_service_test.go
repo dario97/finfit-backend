@@ -2,10 +2,10 @@ package test
 
 import (
 	"errors"
-	"finfit/finfit-backend/src/domain/entities"
-	"finfit/finfit-backend/src/domain/use_cases/custom_errors"
-	"finfit/finfit-backend/src/domain/use_cases/service"
-	"finfit/finfit-backend/src/test/mock/repository_mock"
+	"finfit-backend/src/domain/entities"
+	"finfit-backend/src/domain/use_cases/custom_errors"
+	"finfit-backend/src/domain/use_cases/service"
+	"finfit-backend/src/test/mock/repository_mock"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -47,8 +47,8 @@ func TestGivenThatExpenseTypeServiceFails_WhenCreate_ThenReturnInternalError(t *
 		"Lomitos",
 		expenseType)
 
-	expenseTypeServiceError := custom_errors.InternalError{Msg: "fail to get expense type"}
-	expectedError := custom_errors.InternalError{
+	expenseTypeServiceError := custom_errors.UnexpectedError{Msg: "fail to get expense type"}
+	expectedError := custom_errors.UnexpectedError{
 		Msg: expenseTypeServiceError.Error(),
 	}
 	expenseTypeServiceMock.On("GetById", expenseType.Id()).Return(nil, expenseTypeServiceError)
@@ -96,7 +96,7 @@ func TestGivenThatExpenseRepositoryFails_WhenCreate_ThenReturnInternalError(t *t
 		expenseType)
 
 	expenseRepositoryError := errors.New("fail to save expense")
-	expectedError := custom_errors.InternalError{
+	expectedError := custom_errors.UnexpectedError{
 		Msg: expenseRepositoryError.Error(),
 	}
 

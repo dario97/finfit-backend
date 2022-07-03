@@ -5,9 +5,9 @@ import (
 )
 
 type CreateExpenseRequest struct {
-	Amount      float64      `json:"amount" validate:"required"`
+	Amount      float64      `json:"amount" validate:"required,gt=0"`
 	ExpenseDate time.Time    `json:"expense_date" validate:"required"`
-	Description string       `json:"description" validate:"required"`
+	Description string       `json:"description"`
 	ExpenseType *ExpenseType `json:"expense_type" validate:"required"`
 }
 

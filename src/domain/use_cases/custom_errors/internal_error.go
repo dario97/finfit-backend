@@ -1,9 +1,9 @@
 package custom_errors
 
-type InternalError struct {
+type UnexpectedError struct {
 	Msg string
 }
 
-func (receiver InternalError) Error() string {
+func (receiver UnexpectedError) Error() string {
 	return receiver.Msg
 }

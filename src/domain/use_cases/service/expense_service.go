@@ -1,9 +1,9 @@
 package service
 
 import (
-	"finfit/finfit-backend/src/domain/entities"
-	"finfit/finfit-backend/src/domain/repository"
-	"finfit/finfit-backend/src/domain/use_cases/custom_errors"
+	"finfit-backend/src/domain/entities"
+	"finfit-backend/src/domain/repository"
+	"finfit-backend/src/domain/use_cases/custom_errors"
 	"time"
 )
 
@@ -56,7 +56,7 @@ func (e expenseService) Create(createExpenseCommand CreateExpenseCommand) (*enti
 	expenseType, expenseTypServiceError := e.expenseTypeService.GetById(createExpenseCommand.expenseType.Id())
 
 	if expenseTypServiceError != nil {
-		return nil, custom_errors.InternalError{Msg: expenseTypServiceError.Error()}
+		return nil, custom_errors.UnexpectedError{Msg: expenseTypServiceError.Error()}
 	}
 
 	if expenseType == nil {
@@ -71,7 +71,7 @@ func (e expenseService) Create(createExpenseCommand CreateExpenseCommand) (*enti
 	createdExpense, expenseRepositoryError := e.expenseRepository.Save(expenseToCreate)
 
 	if expenseRepositoryError != nil {
-		return nil, custom_errors.InternalError{Msg: expenseRepositoryError.Error()}
+		return nil, custom_errors.UnexpectedError{Msg: expenseRepositoryError.Error()}
 	}
 
 	return createdExpense, nil

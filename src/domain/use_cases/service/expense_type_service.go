@@ -1,8 +1,8 @@
 package service
 
 import (
-	"finfit/finfit-backend/src/domain/entities"
-	"finfit/finfit-backend/src/domain/repository"
+	"finfit-backend/src/domain/entities"
+	"finfit-backend/src/domain/repository"
 	"github.com/go-playground/validator"
 )
 
