@@ -6,7 +6,10 @@ import (
 	"finfit-backend/src/domain/use_cases/custom_errors"
 	"finfit-backend/src/domain/use_cases/service"
 	"finfit-backend/src/interfaces/controller/dto"
-	"github.com/go-playground/validator"
+	"github.com/go-playground/locales/en"
+	ut "github.com/go-playground/universal-translator"
+	"github.com/go-playground/validator/v10"
+	en2 "github.com/go-playground/validator/v10/translations/en"
 	"github.com/labstack/echo"
 	"net/http"
 )
@@ -86,9 +89,14 @@ func (e expenseController) buildErrorResponse(ctx echo.Context, statusCode int, 
 }
 
 func (e expenseController) buildFieldValidationErrors(fieldErrors []validator.FieldError) []FieldValidationError {
+	english := en.New()
+	uni := ut.New(english, english)
+	translator, _ := uni.GetTranslator("en")
+	_ = en2.RegisterDefaultTranslations(e.validator, translator)
+
 	var fieldValidationErrors []FieldValidationError
 	for _, validationError := range fieldErrors {
-		fieldValidationError := FieldValidationError{Field: validationError.Namespace(), ValidationResult: validationError.Tag()}
+		fieldValidationError := FieldValidationError{Message: validationError.Translate(translator), Field: validationError.Namespace()}
 		fieldValidationErrors = append(fieldValidationErrors, fieldValidationError)
 	}
 

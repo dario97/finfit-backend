@@ -3,7 +3,7 @@ package service
 import (
 	"finfit-backend/src/domain/entities"
 	"finfit-backend/src/domain/repository"
-	"github.com/go-playground/validator"
+	"github.com/go-playground/validator/v10"
 )
 
 type ExpenseTypeService interface {

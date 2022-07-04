@@ -1,6 +1,6 @@
 package controller
 
 type FieldValidationError struct {
-	Field            string `json:"field"`
-	ValidationResult string `json:"validation_result"`
+	Field   string `json:"field"`
+	Message string `json:"message"`
 }
