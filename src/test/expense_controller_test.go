@@ -205,11 +205,11 @@ func mockCreateExpenseRequest(body string) (echo.Context, *httptest.ResponseReco
 }
 
 func getValidator() validators.FieldsValidator {
-	validator := validator.New()
+	validate := validator.New()
 	english := en.New()
 	uni := ut.New(english, english)
 	translator, _ := uni.GetTranslator("en")
-	_ = en2.RegisterDefaultTranslations(validator, translator)
+	_ = en2.RegisterDefaultTranslations(validate, translator)
 
-	return newGenericFieldsValidator(validator, translator)
+	return validators.NewGenericFieldsValidator(validate, translator)
 }
