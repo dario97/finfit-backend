@@ -5,8 +5,8 @@ import (
 	"finfit-backend/src/domain/entities"
 	"finfit-backend/src/domain/use_cases/custom_errors"
 	"finfit-backend/src/domain/use_cases/service"
-	"finfit-backend/src/domain/validators"
 	"finfit-backend/src/interfaces/controller/dto"
+	"finfit-backend/src/interfaces/controller/validators"
 	"github.com/labstack/echo"
 	"net/http"
 )
