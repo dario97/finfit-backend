@@ -1,7 +1,7 @@
 package test
 
 import (
-	"finfit-backend/src/domain/validators"
+	"finfit-backend/src/interfaces/controller/validators"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 )
@@ -11,7 +11,7 @@ type genericFieldsValidator struct {
 	translator ut.Translator
 }
 
-func newGenericFieldsValidator(validator *validator.Validate, translator ut.Translator) genericFieldsValidator {
+func newGenericFieldsValidator(validator *validator.Validate, translator ut.Translator) validators.FieldsValidator {
 	return genericFieldsValidator{
 		validator:  validator,
 		translator: translator,

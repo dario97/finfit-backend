@@ -5,6 +5,7 @@ import (
 	"finfit-backend/src/domain/use_cases/custom_errors"
 	"finfit-backend/src/domain/use_cases/service"
 	"finfit-backend/src/interfaces/controller"
+	"finfit-backend/src/interfaces/controller/validators"
 	"finfit-backend/src/test/mock/repository_mock"
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
@@ -203,7 +204,7 @@ func mockCreateExpenseRequest(body string) (echo.Context, *httptest.ResponseReco
 	return e.NewContext(req, rec), rec
 }
 
-func getValidator() genericFieldsValidator {
+func getValidator() validators.FieldsValidator {
 	validator := validator.New()
 	english := en.New()
 	uni := ut.New(english, english)
