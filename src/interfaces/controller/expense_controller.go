@@ -5,11 +5,8 @@ import (
 	"finfit-backend/src/domain/entities"
 	"finfit-backend/src/domain/use_cases/custom_errors"
 	"finfit-backend/src/domain/use_cases/service"
+	"finfit-backend/src/domain/validators"
 	"finfit-backend/src/interfaces/controller/dto"
-	"github.com/go-playground/locales/en"
-	ut "github.com/go-playground/universal-translator"
-	"github.com/go-playground/validator/v10"
-	en2 "github.com/go-playground/validator/v10/translations/en"
 	"github.com/labstack/echo"
 	"net/http"
 )
@@ -29,12 +26,12 @@ type ExpenseController interface {
 }
 
 type expenseController struct {
-	expenseService service.ExpenseService
-	validator      *validator.Validate
+	expenseService  service.ExpenseService
+	fieldsValidator validators.FieldsValidator
 }
 
-func NewExpenseController(service service.ExpenseService) ExpenseController {
-	return expenseController{expenseService: service, validator: validator.New()}
+func NewExpenseController(service service.ExpenseService, fieldsValidator validators.FieldsValidator) ExpenseController {
+	return expenseController{expenseService: service, fieldsValidator: fieldsValidator}
 }
 
 func (e expenseController) Search(context echo.Context) error {
@@ -54,8 +51,7 @@ func (e expenseController) Create(context echo.Context) error {
 		return e.buildErrorResponse(context, http.StatusBadRequest, bodyWasInvalidErrorMessage, err.Error())
 	}
 
-	if err := e.validator.Struct(createExpenseRequest); err != nil {
-		fieldValidationErrors := e.buildFieldValidationErrors(err.(validator.ValidationErrors))
+	if fieldValidationErrors := e.fieldsValidator.ValidateFields(createExpenseRequest); len(fieldValidationErrors) > 0 {
 		return e.buildErrorResponse(context, http.StatusBadRequest, fieldValidationErrorMessage, fieldValidationErrors)
 	}
 
@@ -86,21 +82,6 @@ func (e expenseController) Update(context echo.Context) error {
 func (e expenseController) buildErrorResponse(ctx echo.Context, statusCode int, errorMessage string, errorDetail interface{}) error {
 	errorResponse := errorResponse{StatusCode: statusCode, Msg: errorMessage, ErrorDetail: errorDetail}
 	return ctx.JSON(statusCode, errorResponse)
-}
-
-func (e expenseController) buildFieldValidationErrors(fieldErrors []validator.FieldError) []FieldValidationError {
-	english := en.New()
-	uni := ut.New(english, english)
-	translator, _ := uni.GetTranslator("en")
-	_ = en2.RegisterDefaultTranslations(e.validator, translator)
-
-	var fieldValidationErrors []FieldValidationError
-	for _, validationError := range fieldErrors {
-		fieldValidationError := FieldValidationError{Message: validationError.Translate(translator), Field: validationError.Namespace()}
-		fieldValidationErrors = append(fieldValidationErrors, fieldValidationError)
-	}
-
-	return fieldValidationErrors
 }
 
 func (e expenseController) manageServiceError(ctx echo.Context, err error) error {

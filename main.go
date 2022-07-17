@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/labstack/echo"
 	"log"
+	"net/http"
 )
 
 func main() {
@@ -14,12 +15,21 @@ func main() {
 	db.LogMode(true)
 	defer db.Close()
 
-	r := registry.NewRegistry(db)
+	repositoryRegistry := registry.NewRepositoryRegistry(db)
+	serviceRegistry := registry.NewServiceRegistry(repositoryRegistry)
+	controllerRegistry := registry.NewControllerRegistry(serviceRegistry)
+
+	expenseController := controllerRegistry.GetExpenseController()
+
 	e := echo.New()
-	e = router.NewRouter(e, r.NewAppController())
+	appRouter := router.NewRouter(e)
+
+	appRouter.RegisterEndpoint(http.MethodPost, "/expense", func(context echo.Context) error {
+		return expenseController.Create(context)
+	})
 
 	fmt.Println("Server listen at http://localhost" + ":8080")
-	if err := e.Start(":8080"); err != nil {
+	if err := appRouter.Start(":8080"); err != nil {
 		log.Fatalln(err)
 	}
 }

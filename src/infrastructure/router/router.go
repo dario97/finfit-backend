@@ -1,18 +1,32 @@
 package router
 
 import (
-	"finfit-backend/src/interfaces/controller"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 )
 
-func NewRouter(e *echo.Echo, appController controller.AppController) *echo.Echo {
+type AppRouter interface {
+	RegisterEndpoint()
+	Start(address string) error
+}
+
+type router struct {
+	e *echo.Echo
+}
+
+func NewRouter(e *echo.Echo) router {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	e.POST("/expense", func(context echo.Context) error {
-		return appController.Create(context)
-	})
+	return router{
+		e: e,
+	}
+}
 
-	return e
+func (receiver router) RegisterEndpoint(httpMethod string, path string, handlerFunc echo.HandlerFunc) {
+	receiver.e.Add(httpMethod, path, handlerFunc)
+}
+
+func (receiver router) Start(address string) error {
+	return receiver.e.Start(address)
 }

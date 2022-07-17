@@ -1,4 +1,4 @@
-package controller
+package validators
 
 type FieldValidationError struct {
 	Field   string `json:"field"`

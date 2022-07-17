@@ -6,6 +6,10 @@ import (
 	"finfit-backend/src/domain/use_cases/service"
 	"finfit-backend/src/interfaces/controller"
 	"finfit-backend/src/test/mock/repository_mock"
+	"github.com/go-playground/locales/en"
+	ut "github.com/go-playground/universal-translator"
+	"github.com/go-playground/validator/v10"
+	en2 "github.com/go-playground/validator/v10/translations/en"
 	"github.com/labstack/echo"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -33,7 +37,7 @@ func TestGivenAnExpenseToCreate_WhenCreate_ThenReturnStatusOkWithCreatedExpense(
 		entities.NewExpenseTypeWithId(1, "Delivery"),
 	)).Return(&expectedCreatedExpense, nil)
 
-	handler := controller.NewExpenseController(expenseServiceMock)
+	handler := controller.NewExpenseController(expenseServiceMock, getValidator())
 
 	if assert.NoError(t, handler.Create(c)) {
 		assert.Equal(t, http.StatusCreated, rec.Code)
@@ -59,7 +63,7 @@ func TestGivenAnExpenseToCreateWithoutDescription_WhenCreate_ThenReturnStatusOkW
 		entities.NewExpenseTypeWithId(1, "Delivery"),
 	)).Return(&expectedCreatedExpense, nil)
 
-	handler := controller.NewExpenseController(expenseServiceMock)
+	handler := controller.NewExpenseController(expenseServiceMock, getValidator())
 
 	if assert.NoError(t, handler.Create(c)) {
 		assert.Equal(t, http.StatusCreated, rec.Code)
@@ -78,7 +82,7 @@ func TestGivenAnInvalidExpenseType_WhenCreate_ThenReturnErrorWithBadRequestStatu
 		entities.NewExpenseTypeWithId(1, "Delivery"),
 	)).Return(nil, custom_errors.InvalidExpenseTypeError{Msg: "the expense type doesn't exists"})
 
-	handler := controller.NewExpenseController(expenseServiceMock)
+	handler := controller.NewExpenseController(expenseServiceMock, getValidator())
 
 	handler.Create(c)
 
@@ -98,7 +102,7 @@ func TestGivenAnUnexpectedError_WhenCreate_ThenReturnErrorWithInternalServerErro
 		entities.NewExpenseTypeWithId(1, "Delivery"),
 	)).Return(nil, custom_errors.UnexpectedError{Msg: "cagamo fuego"})
 
-	handler := controller.NewExpenseController(expenseServiceMock)
+	handler := controller.NewExpenseController(expenseServiceMock, getValidator())
 
 	handler.Create(c)
 
@@ -113,7 +117,7 @@ func TestGivenAnExpenseWithoutAmount_WhenCreate_ThenReturnErrorWithBadRequestSta
 	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"CreateExpenseRequest.Amount\",\"message\":\"Amount is a required field\"}]}\n"
 	c, rec := mockCreateExpenseRequest(requestBody)
 
-	handler := controller.NewExpenseController(expenseServiceMock)
+	handler := controller.NewExpenseController(expenseServiceMock, getValidator())
 
 	handler.Create(c)
 
@@ -127,7 +131,7 @@ func TestGivenAnExpenseWithAmountLowerThanZero_WhenCreate_ThenReturnErrorWithBad
 	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"CreateExpenseRequest.Amount\",\"message\":\"Amount must be greater than 0\"}]}\n"
 	c, rec := mockCreateExpenseRequest(requestBody)
 
-	handler := controller.NewExpenseController(expenseServiceMock)
+	handler := controller.NewExpenseController(expenseServiceMock, getValidator())
 
 	handler.Create(c)
 
@@ -141,7 +145,7 @@ func TestGivenAnExpenseWithoutExpenseDate_WhenCreate_ThenReturnErrorWithBadReque
 	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"CreateExpenseRequest.ExpenseDate\",\"message\":\"ExpenseDate is a required field\"}]}\n"
 	c, rec := mockCreateExpenseRequest(requestBody)
 
-	handler := controller.NewExpenseController(expenseServiceMock)
+	handler := controller.NewExpenseController(expenseServiceMock, getValidator())
 
 	handler.Create(c)
 
@@ -155,7 +159,7 @@ func TestGivenAnExpenseWithoutExpenseType_WhenCreate_ThenReturnErrorWithBadReque
 	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"CreateExpenseRequest.ExpenseType\",\"message\":\"ExpenseType is a required field\"}]}\n"
 	c, rec := mockCreateExpenseRequest(requestBody)
 
-	handler := controller.NewExpenseController(expenseServiceMock)
+	handler := controller.NewExpenseController(expenseServiceMock, getValidator())
 
 	handler.Create(c)
 
@@ -169,7 +173,7 @@ func TestGivenAnExpenseWithoutExpenseTypeID_WhenCreate_ThenReturnErrorWithBadReq
 	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"CreateExpenseRequest.ExpenseType.ID\",\"message\":\"ID is a required field\"}]}\n"
 	c, rec := mockCreateExpenseRequest(requestBody)
 
-	handler := controller.NewExpenseController(expenseServiceMock)
+	handler := controller.NewExpenseController(expenseServiceMock, getValidator())
 
 	handler.Create(c)
 
@@ -183,7 +187,7 @@ func TestGivenAnExpenseWithoutExpenseTypeName_WhenCreate_ThenReturnErrorWithBadR
 	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"CreateExpenseRequest.ExpenseType.Name\",\"message\":\"Name is a required field\"}]}\n"
 	c, rec := mockCreateExpenseRequest(requestBody)
 
-	handler := controller.NewExpenseController(expenseServiceMock)
+	handler := controller.NewExpenseController(expenseServiceMock, getValidator())
 
 	handler.Create(c)
 
@@ -197,4 +201,14 @@ func mockCreateExpenseRequest(body string) (echo.Context, *httptest.ResponseReco
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	return e.NewContext(req, rec), rec
+}
+
+func getValidator() genericFieldsValidator {
+	validator := validator.New()
+	english := en.New()
+	uni := ut.New(english, english)
+	translator, _ := uni.GetTranslator("en")
+	_ = en2.RegisterDefaultTranslations(validator, translator)
+
+	return newGenericFieldsValidator(validator, translator)
 }
