@@ -1,7 +1,7 @@
 package registry
 
 import (
-	"finfit-backend/src/domain/validators"
+	"finfit-backend/src/infrastructure/interfaces/controller/validators"
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"

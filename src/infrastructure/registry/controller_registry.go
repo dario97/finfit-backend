@@ -1,6 +1,8 @@
 package registry
 
-import "finfit-backend/src/interfaces/controller"
+import (
+	"finfit-backend/src/infrastructure/interfaces/controller"
+)
 
 type ControllerRegistry struct {
 	serviceRegistry ServiceRegistry

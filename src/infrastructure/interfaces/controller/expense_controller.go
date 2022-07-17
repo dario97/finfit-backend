@@ -5,8 +5,8 @@ import (
 	"finfit-backend/src/domain/entities"
 	"finfit-backend/src/domain/use_cases/custom_errors"
 	"finfit-backend/src/domain/use_cases/service"
-	"finfit-backend/src/interfaces/controller/dto"
-	"finfit-backend/src/interfaces/controller/validators"
+	dto2 "finfit-backend/src/infrastructure/interfaces/controller/dto"
+	"finfit-backend/src/infrastructure/interfaces/controller/validators"
 	"github.com/labstack/echo"
 	"net/http"
 )
@@ -45,7 +45,7 @@ func (e expenseController) GetById(context echo.Context) error {
 }
 
 func (e expenseController) Create(context echo.Context) error {
-	createExpenseRequest := new(dto.CreateExpenseRequest)
+	createExpenseRequest := new(dto2.CreateExpenseRequest)
 
 	if err := context.Bind(createExpenseRequest); err != nil {
 		return e.buildErrorResponse(context, http.StatusBadRequest, bodyWasInvalidErrorMessage, err.Error())
@@ -66,7 +66,7 @@ func (e expenseController) Create(context echo.Context) error {
 		return e.manageServiceError(context, err)
 	}
 
-	return context.JSON(http.StatusCreated, dto.NewExpenseResponseFromExpense(*createdExpense))
+	return context.JSON(http.StatusCreated, dto2.NewExpenseResponseFromExpense(*createdExpense))
 }
 
 func (e expenseController) DeleteById(context echo.Context) error {
