@@ -25,9 +25,21 @@ func NewCreateExpenseCommand(amount float64, expenseDate time.Time, description 
 	}
 }
 
+type SearchInPeriodCommand struct {
+	startDate time.Time
+	endDate   time.Time
+}
+
+func NewSearchInPeriodCommand(startDate time.Time, endDate time.Time) SearchInPeriodCommand {
+	return SearchInPeriodCommand{
+		startDate: startDate,
+		endDate:   endDate,
+	}
+}
+
 type ExpenseService interface {
 	GetById(id int64) (*entities.Expense, error)
-	Search() (*entities.Expense, error)
+	SearchInPeriod(searchInPeriodCommand SearchInPeriodCommand) ([]*entities.Expense, error)
 	Create(createExpenseCommand CreateExpenseCommand) (*entities.Expense, error)
 	DeleteById(id int64) (*entities.Expense, error)
 	Update(entity entities.Expense) (*entities.Expense, error)
@@ -47,7 +59,7 @@ func (e expenseService) GetById(id int64) (*entities.Expense, error) {
 	panic("implement me")
 }
 
-func (e expenseService) Search() (*entities.Expense, error) {
+func (e expenseService) SearchInPeriod(command SearchInPeriodCommand) ([]*entities.Expense, error) {
 	//TODO implement me
 	panic("implement me")
 }
