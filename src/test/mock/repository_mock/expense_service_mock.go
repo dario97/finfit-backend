@@ -19,7 +19,7 @@ func (e *expenseServiceMock) GetById(id int64) (*entities.Expense, error) {
 	panic("implement me")
 }
 
-func (e *expenseServiceMock) Search() (*entities.Expense, error) {
+func (e *expenseServiceMock) SearchInPeriod(command service.SearchInPeriodCommand) ([]*entities.Expense, error) {
 	//TODO implement me
 	panic("implement me")
 }

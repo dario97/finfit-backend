@@ -30,7 +30,7 @@ func TestGivenAExpenseToCreate_WhenCreate_ThenReturnCreatedExpense(t *testing.T)
 	expenseRepositoryMock.On("Save", expenseToCreate).Return(&expectedCreatedExpense, nil)
 	expenseTypeServiceMock.On("GetById", expenseType.Id()).Return(&expenseType, nil)
 
-	actualCreatedExpense, err := expenseService.Create(getCreateExpenseCommandFromExpense(expenseToCreate))
+	actualCreatedExpense, err := expenseService.Create(buildCreateExpenseCommandFromExpense(expenseToCreate))
 
 	assert.Nil(t, err, "Error must to be nil")
 	assertEqualsExpense(t, expectedCreatedExpense, *actualCreatedExpense)
@@ -53,7 +53,7 @@ func TestGivenThatExpenseTypeServiceFails_WhenCreate_ThenReturnInternalError(t *
 	}
 	expenseTypeServiceMock.On("GetById", expenseType.Id()).Return(nil, expenseTypeServiceError)
 
-	actualCreatedExpense, err := expenseService.Create(getCreateExpenseCommandFromExpense(expenseToCreate))
+	actualCreatedExpense, err := expenseService.Create(buildCreateExpenseCommandFromExpense(expenseToCreate))
 
 	assert.Nil(t, actualCreatedExpense)
 	assert.NotNil(t, err, "Error must not be nil")
@@ -77,7 +77,7 @@ func TestGivenThatExpenseTypeNotExists_WhenCreate_ThenReturnInvalidExpenseTypeEr
 
 	expenseTypeServiceMock.On("GetById", expenseType.Id()).Return(nil, nil)
 
-	actualCreatedExpense, err := expenseService.Create(getCreateExpenseCommandFromExpense(expenseToCreate))
+	actualCreatedExpense, err := expenseService.Create(buildCreateExpenseCommandFromExpense(expenseToCreate))
 
 	assert.Nil(t, actualCreatedExpense)
 	assert.NotNil(t, err, "Error must not be nil")
@@ -103,11 +103,30 @@ func TestGivenThatExpenseRepositoryFails_WhenCreate_ThenReturnInternalError(t *t
 	expenseTypeServiceMock.On("GetById", expenseType.Id()).Return(&expenseType, nil)
 	expenseRepositoryMock.On("Save", expenseToCreate).Return(nil, expenseRepositoryError)
 
-	actualCreatedExpense, err := expenseService.Create(getCreateExpenseCommandFromExpense(expenseToCreate))
+	actualCreatedExpense, err := expenseService.Create(buildCreateExpenseCommandFromExpense(expenseToCreate))
 
 	assert.Nil(t, actualCreatedExpense)
 	assert.NotNil(t, err, "Error must not be nil")
 	assert.Equal(t, expectedError, err)
+}
+
+func TestGivenAStartDateAndEndDate_WhenSearchInPeriod_ThenReturnExpensesInPeriod(t *testing.T) {
+	expenseRepositoryMock := repository_mock.NewExpenseRepositoryMock()
+	expenseTypeServiceMock := repository_mock.NewExpenseTypeServiceMock()
+	expenseService := service.NewExpenseService(expenseRepositoryMock, expenseTypeServiceMock)
+
+	startDate := time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC)
+	endDate := time.Date(2022, 7, 1, 0, 0, 0, 0, time.UTC)
+
+	var expectedExpensesInPeriod []*entities.Expense
+	actualExpensesInPeriod, err := expenseService.SearchInPeriod(service.NewSearchInPeriodCommand(startDate, endDate))
+
+	assert.Nil(t, err, "Error must to be nil")
+
+	assert.Equal(t, len(expectedExpensesInPeriod), len(actualExpensesInPeriod))
+	for i, expectedExpense := range expectedExpensesInPeriod {
+		assertEqualsExpense(t, *expectedExpense, *actualExpensesInPeriod[i])
+	}
 }
 
 func assertEqualsExpense(t *testing.T, expected entities.Expense, actual entities.Expense) {
@@ -118,6 +137,10 @@ func assertEqualsExpense(t *testing.T, expected entities.Expense, actual entitie
 	assert.Equalf(t, expected.Description(), actual.Description(), "descriptions are not equals")
 }
 
-func getCreateExpenseCommandFromExpense(expense entities.Expense) service.CreateExpenseCommand {
+func buildCreateExpenseCommandFromExpense(expense entities.Expense) service.CreateExpenseCommand {
 	return service.NewCreateExpenseCommand(expense.Amount(), expense.ExpenseDate(), expense.Description(), expense.ExpenseType())
+}
+
+func buildSearchInPeriodCommand(startDate time.Time, endDate time.Time) service.SearchInPeriodCommand {
+	return service.NewSearchInPeriodCommand(startDate, endDate)
 }

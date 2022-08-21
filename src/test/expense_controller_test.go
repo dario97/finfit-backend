@@ -115,7 +115,7 @@ func TestGivenAnUnexpectedError_WhenCreate_ThenReturnErrorWithInternalServerErro
 func TestGivenAnExpenseWithoutAmount_WhenCreate_ThenReturnErrorWithBadRequestStatus(t *testing.T) {
 	expenseServiceMock := repository_mock.NewExpenseServiceMock()
 	requestBody := `{"description":"Lomitos","expense_date":"2022-03-15T10:04:05Z","expense_type":{"id":1,"name":"Delivery"}}`
-	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"CreateExpenseRequest.Amount\",\"message\":\"Amount is a required field\"}]}\n"
+	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"CreateExpenseRequest.amount\",\"message\":\"amount is a required field\"}]}\n"
 	c, rec := mockCreateExpenseRequest(requestBody)
 
 	handler := controller.NewExpenseController(expenseServiceMock, getValidator())
@@ -129,7 +129,7 @@ func TestGivenAnExpenseWithoutAmount_WhenCreate_ThenReturnErrorWithBadRequestSta
 func TestGivenAnExpenseWithAmountLowerThanZero_WhenCreate_ThenReturnErrorWithBadRequestStatus(t *testing.T) {
 	expenseServiceMock := repository_mock.NewExpenseServiceMock()
 	requestBody := `{"amount":-1,"description":"Lomitos","expense_date":"2022-03-15T10:04:05Z","expense_type":{"id":1,"name":"Delivery"}}`
-	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"CreateExpenseRequest.Amount\",\"message\":\"Amount must be greater than 0\"}]}\n"
+	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"CreateExpenseRequest.amount\",\"message\":\"amount must be greater than 0\"}]}\n"
 	c, rec := mockCreateExpenseRequest(requestBody)
 
 	handler := controller.NewExpenseController(expenseServiceMock, getValidator())
@@ -143,7 +143,7 @@ func TestGivenAnExpenseWithAmountLowerThanZero_WhenCreate_ThenReturnErrorWithBad
 func TestGivenAnExpenseWithoutExpenseDate_WhenCreate_ThenReturnErrorWithBadRequestStatus(t *testing.T) {
 	expenseServiceMock := repository_mock.NewExpenseServiceMock()
 	requestBody := `{"amount":100.2,"description":"Lomitos","expense_type":{"id":1,"name":"Delivery"}}`
-	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"CreateExpenseRequest.ExpenseDate\",\"message\":\"ExpenseDate is a required field\"}]}\n"
+	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"CreateExpenseRequest.expenseDate\",\"message\":\"expenseDate is a required field\"}]}\n"
 	c, rec := mockCreateExpenseRequest(requestBody)
 
 	handler := controller.NewExpenseController(expenseServiceMock, getValidator())
@@ -157,7 +157,7 @@ func TestGivenAnExpenseWithoutExpenseDate_WhenCreate_ThenReturnErrorWithBadReque
 func TestGivenAnExpenseWithoutExpenseType_WhenCreate_ThenReturnErrorWithBadRequestStatus(t *testing.T) {
 	expenseServiceMock := repository_mock.NewExpenseServiceMock()
 	requestBody := `{"amount":10.3,"description":"Lomitos","expense_date":"2022-03-15T10:04:05Z"}`
-	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"CreateExpenseRequest.ExpenseType\",\"message\":\"ExpenseType is a required field\"}]}\n"
+	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"CreateExpenseRequest.expenseType\",\"message\":\"expenseType is a required field\"}]}\n"
 	c, rec := mockCreateExpenseRequest(requestBody)
 
 	handler := controller.NewExpenseController(expenseServiceMock, getValidator())
@@ -171,7 +171,7 @@ func TestGivenAnExpenseWithoutExpenseType_WhenCreate_ThenReturnErrorWithBadReque
 func TestGivenAnExpenseWithoutExpenseTypeID_WhenCreate_ThenReturnErrorWithBadRequestStatus(t *testing.T) {
 	expenseServiceMock := repository_mock.NewExpenseServiceMock()
 	requestBody := `{"amount":100.2,"description":"Lomitos","expense_date":"2022-03-15T10:04:05Z","expense_type":{"name":"Delivery"}}`
-	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"CreateExpenseRequest.ExpenseType.ID\",\"message\":\"ID is a required field\"}]}\n"
+	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"CreateExpenseRequest.expenseType.ID\",\"message\":\"ID is a required field\"}]}\n"
 	c, rec := mockCreateExpenseRequest(requestBody)
 
 	handler := controller.NewExpenseController(expenseServiceMock, getValidator())
@@ -185,7 +185,7 @@ func TestGivenAnExpenseWithoutExpenseTypeID_WhenCreate_ThenReturnErrorWithBadReq
 func TestGivenAnExpenseWithoutExpenseTypeName_WhenCreate_ThenReturnErrorWithBadRequestStatus(t *testing.T) {
 	expenseServiceMock := repository_mock.NewExpenseServiceMock()
 	requestBody := `{"amount":100.2,"description":"Lomitos","expense_date":"2022-03-15T10:04:05Z","expense_type":{"id":1}}`
-	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"CreateExpenseRequest.ExpenseType.Name\",\"message\":\"Name is a required field\"}]}\n"
+	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"CreateExpenseRequest.expenseType.Name\",\"message\":\"Name is a required field\"}]}\n"
 	c, rec := mockCreateExpenseRequest(requestBody)
 
 	handler := controller.NewExpenseController(expenseServiceMock, getValidator())
