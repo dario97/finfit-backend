@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func Test01(t *testing.T) {
+func TestGivenAnStartDateAndEndDate_whenSearchInPeriod_thenReturnExpensesInPeriod(t *testing.T) {
 	repositoryMock := newRepositoryMock()
 	service := NewService(repositoryMock)
 	startDate := time.Date(2022, 7, 1, 0, 0, 0, 0, time.UTC)
@@ -16,28 +16,36 @@ func Test01(t *testing.T) {
 	actualExpenses, err := service.SearchInPeriod(command)
 
 	expectedExpenses := []*expense{
-		&expense{
-			id:          1,
-			amount:      10.3,
-			expenseDate: time.Date(2022, 8, 4, 0, 0, 0, 0, time.UTC),
-			description: "playstation 5",
-			expenseType: expenseType{
-				id:   1,
-				name: "Tecnologia",
-			},
-		},
-		&expense{
-			id:          2,
-			amount:      101.2,
-			expenseDate: time.Date(2022, 7, 2, 0, 0, 0, 0, time.UTC),
-			description: "playstation 1",
-			expenseType: expenseType{
-				id:   1,
-				name: "Antiguedades",
-			},
-		},
+		getExpense(),
+		getAnotherExpense(),
 	}
 
 	assert.Nil(t, err)
 	assert.Equal(t, expectedExpenses, actualExpenses)
+}
+
+func getExpense() *expense {
+	return &expense{
+		id:          1,
+		amount:      10.3,
+		expenseDate: time.Date(2022, 8, 4, 0, 0, 0, 0, time.UTC),
+		description: "playstation 5",
+		expenseType: expenseType{
+			id:   1,
+			name: "Tecnologia",
+		},
+	}
+}
+
+func getAnotherExpense() *expense {
+	return &expense{
+		id:          2,
+		amount:      101.2,
+		expenseDate: time.Date(2022, 7, 2, 0, 0, 0, 0, time.UTC),
+		description: "playstation 1",
+		expenseType: expenseType{
+			id:   1,
+			name: "Antiguedades",
+		},
+	}
 }
