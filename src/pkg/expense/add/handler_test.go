@@ -1,7 +1,6 @@
 package add
 
 import (
-	"finfit-backend/src/domain/use_cases/custom_errors"
 	validator2 "finfit-backend/src/pkg/fieldvalidation"
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
@@ -93,7 +92,7 @@ func TestGivenAnInvalidExpenseType_WhenCreate_ThenReturnErrorWithBadRequestStatu
 			id:   1,
 			name: "Delivery",
 		},
-	}).Return(nil, custom_errors.InvalidExpenseTypeError{Msg: "the expenseDBModel type doesn't exists"})
+	}).Return(nil, InvalidExpenseTypeError{Msg: "the expenseDBModel type doesn't exists"})
 
 	handler := NewHandler(expenseServiceMock, getValidator())
 
@@ -117,7 +116,7 @@ func TestGivenAnUnexpectedError_WhenCreate_ThenReturnErrorWithInternalServerErro
 			id:   1,
 			name: "Delivery",
 		},
-	}).Return(nil, custom_errors.UnexpectedError{Msg: "cagamo fuego"})
+	}).Return(nil, UnexpectedError{Msg: "cagamo fuego"})
 
 	handler := NewHandler(expenseServiceMock, getValidator())
 
