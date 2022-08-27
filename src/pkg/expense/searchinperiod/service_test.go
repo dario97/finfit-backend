@@ -25,7 +25,7 @@ func TestGivenAnStartDateAndEndDate_whenSearchInPeriod_thenReturnExpensesInPerio
 	assert.Equal(t, expectedExpenses, actualExpenses)
 }
 
-func Test02(t *testing.T) {
+func TestGivenThatRepositoryFails_whenSearchInPeriod_thenReturnError(t *testing.T) {
 	repositoryMock := newRepositoryMock()
 	service := NewService(repositoryMock)
 	startDate := time.Date(2022, 7, 1, 0, 0, 0, 0, time.UTC)
