@@ -1,8 +1,7 @@
 package main
 
 import (
-	"finfit-backend/src/infrastructure/datastore"
-	"finfit-backend/src/infrastructure/registry"
+	"finfit-backend/src/cmd"
 	"finfit-backend/src/infrastructure/router"
 	"fmt"
 	"github.com/labstack/echo"
@@ -11,21 +10,13 @@ import (
 )
 
 func main() {
-	db := datastore.NewDB()
-	db.LogMode(true)
-	defer db.Close()
-
-	repositoryRegistry := registry.NewRepositoryRegistry(db)
-	serviceRegistry := registry.NewServiceRegistry(repositoryRegistry)
-	controllerRegistry := registry.NewControllerRegistry(serviceRegistry)
-
-	expenseController := controllerRegistry.GetExpenseController()
+	defer cmd.Database.Close()
 
 	e := echo.New()
 	appRouter := router.NewRouter(e)
 
 	appRouter.RegisterEndpoint(http.MethodPost, "/expense", func(context echo.Context) error {
-		return expenseController.Create(context)
+		return cmd.AddExpenseHandler.Add(context)
 	})
 
 	fmt.Println("Server listen at http://localhost" + ":8080")
