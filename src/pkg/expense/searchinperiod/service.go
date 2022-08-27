@@ -1,4 +1,4 @@
-package search_in_period
+package searchinperiod
 
 import (
 	"time"

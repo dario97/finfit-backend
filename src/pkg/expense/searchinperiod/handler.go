@@ -1,7 +1,7 @@
-package search_in_period
+package searchinperiod
 
 import (
-	"finfit-backend/src/pkg/validator"
+	"finfit-backend/src/pkg/fieldvalidation"
 	"github.com/labstack/echo"
 )
 
@@ -11,10 +11,10 @@ type Handler interface {
 
 type handler struct {
 	service         Service
-	fieldsValidator validator.FieldsValidator
+	fieldsValidator fieldvalidation.FieldsValidator
 }
 
-func NewHandler(service Service, fieldsValidator validator.FieldsValidator) Handler {
+func NewHandler(service Service, fieldsValidator fieldvalidation.FieldsValidator) Handler {
 	return handler{
 		service:         service,
 		fieldsValidator: fieldsValidator,

@@ -2,8 +2,7 @@ package add
 
 import (
 	"errors"
-	"finfit-backend/src/domain/use_cases/custom_errors"
-	"finfit-backend/src/pkg/validator"
+	"finfit-backend/src/pkg/fieldvalidation"
 	"github.com/labstack/echo"
 	"net/http"
 	"time"
@@ -22,10 +21,10 @@ type Handler interface {
 
 type handler struct {
 	service         Service
-	fieldsValidator validator.FieldsValidator
+	fieldsValidator fieldvalidation.FieldsValidator
 }
 
-func NewHandler(service Service, fieldsValidator validator.FieldsValidator) Handler {
+func NewHandler(service Service, fieldsValidator fieldvalidation.FieldsValidator) Handler {
 	return handler{
 		service:         service,
 		fieldsValidator: fieldsValidator,
@@ -78,6 +77,19 @@ func (h handler) mapCreatedExpenseToExpenseResponse(expense createdExpense) expe
 	}
 }
 
+func (h handler) buildErrorResponse(ctx echo.Context, statusCode int, errorMessage string, errorDetail interface{}) error {
+	errorResponse := errorResponse{StatusCode: statusCode, Msg: errorMessage, ErrorDetail: errorDetail}
+	return ctx.JSON(statusCode, errorResponse)
+}
+
+func (h handler) manageServiceError(ctx echo.Context, err error) error {
+	if errors.As(err, &InvalidExpenseTypeError{}) {
+		return h.buildErrorResponse(ctx, http.StatusBadRequest, err.Error(), err.Error())
+	} else {
+		return h.buildErrorResponse(ctx, http.StatusInternalServerError, unexpectedErrorMessage, err.Error())
+	}
+}
+
 type requestBody struct {
 	Amount      float64                 `json:"amount" validate:"required,gt=0"`
 	ExpenseDate string                  `json:"expense_date" validate:"required,datetime=2006-01-02"`
@@ -102,17 +114,4 @@ type errorResponse struct {
 	StatusCode  int         `json:"status_code"`
 	Msg         string      `json:"msg"`
 	ErrorDetail interface{} `json:"error_detail"`
-}
-
-func (h handler) buildErrorResponse(ctx echo.Context, statusCode int, errorMessage string, errorDetail interface{}) error {
-	errorResponse := errorResponse{StatusCode: statusCode, Msg: errorMessage, ErrorDetail: errorDetail}
-	return ctx.JSON(statusCode, errorResponse)
-}
-
-func (h handler) manageServiceError(ctx echo.Context, err error) error {
-	if errors.As(err, &custom_errors.InvalidExpenseTypeError{}) {
-		return h.buildErrorResponse(ctx, http.StatusBadRequest, err.Error(), err.Error())
-	} else {
-		return h.buildErrorResponse(ctx, http.StatusInternalServerError, unexpectedErrorMessage, err.Error())
-	}
 }

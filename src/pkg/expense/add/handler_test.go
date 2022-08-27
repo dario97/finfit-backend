@@ -2,7 +2,7 @@ package add
 
 import (
 	"finfit-backend/src/domain/use_cases/custom_errors"
-	validator2 "finfit-backend/src/pkg/validator"
+	validator2 "finfit-backend/src/pkg/fieldvalidation"
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"

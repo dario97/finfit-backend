@@ -1,4 +1,4 @@
-package search_in_period
+package searchinperiod
 
 type expenseType struct {
 	id   uint64
