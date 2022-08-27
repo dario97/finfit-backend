@@ -39,26 +39,10 @@ func NewService(repository Repository) Service {
 }
 
 func (s service) SearchInPeriod(command *command) ([]*expense, error) {
-	return []*expense{
-		&expense{
-			id:          1,
-			amount:      10.3,
-			expenseDate: time.Date(2022, 8, 4, 0, 0, 0, 0, time.UTC),
-			description: "playstation 5",
-			expenseType: expenseType{
-				id:   1,
-				name: "Tecnologia",
-			},
-		},
-		&expense{
-			id:          2,
-			amount:      101.2,
-			expenseDate: time.Date(2022, 7, 2, 0, 0, 0, 0, time.UTC),
-			description: "playstation 1",
-			expenseType: expenseType{
-				id:   1,
-				name: "Antiguedades",
-			},
-		},
-	}, nil
+	expenses, err := s.repository.SearchExpensesInPeriod(command.startDate, command.endDate)
+	if err != nil {
+		return nil, unexpectedError{msg: err.Error()}
+	}
+
+	return expenses, nil
 }
