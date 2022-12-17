@@ -7,6 +7,7 @@ import (
 	"finfit-backend/pkg"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"testing"
 	"time"
@@ -99,6 +100,26 @@ func (suite *ExpenseServiceTestSuite) TestGivenThatExpenseTypeNotExists_WhenAdd_
 	assert.Equal(suite.T(), expectedError, err)
 }
 
+func (suite *ExpenseServiceTestSuite) TestGivenAPeriod_WhenSearchInPeriod_ThenReturnAListOfExpenses() {
+	expensesToReturn := suite.getExpenses()
+
+	searchInPeriodCommand, _ := NewSearchInPeriodCommand(
+		time.Date(2022, 5, 23, 0, 0, 0, 0, time.Local),
+		time.Date(2022, 8, 23, 0, 0, 0, 0, time.Local))
+
+	suite.expenseRepositoryMock.MockSearchInPeriod(
+		[]interface{}{searchInPeriodCommand.startDate, searchInPeriodCommand.endDate},
+		[]interface{}{expensesToReturn, nil},
+		1)
+
+	actualExpenses, err := suite.service.SearchInPeriod(searchInPeriodCommand)
+
+	require.NoError(suite.T(), err)
+	for i, expectdExpense := range expensesToReturn {
+		assertEqualsExpense(suite.T(), expectdExpense, actualExpenses[i])
+	}
+}
+
 func (suite *ExpenseServiceTestSuite) TestGivenThatSaveExpenseIntoDatabaseFails_WhenAdd_ThenReturnError() {
 	expenseToCreate := getExpense()
 
@@ -115,6 +136,13 @@ func (suite *ExpenseServiceTestSuite) TestGivenThatSaveExpenseIntoDatabaseFails_
 	assert.Nil(suite.T(), actualCreatedExpense)
 	assert.NotNil(suite.T(), err, "Error must not be nil")
 	assert.Equal(suite.T(), expectedError, err)
+}
+
+func (suite *ExpenseServiceTestSuite) getExpenses() []*models.Expense {
+	return []*models.Expense{
+		models.NewExpense(10.3, time.Date(2022, 5, 28, 0, 0, 0, 0, time.Local), "Lomitos", models.NewExpenseType("Servicios")),
+		models.NewExpense(10.3, time.Date(2022, 7, 28, 0, 0, 0, 0, time.Local), "Lomitos", models.NewExpenseType("Servicios")),
+	}
 }
 
 func getExpense() *models.Expense {

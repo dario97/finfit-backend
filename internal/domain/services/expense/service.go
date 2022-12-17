@@ -3,15 +3,19 @@ package expense
 import (
 	"finfit-backend/internal/domain/models"
 	"finfit-backend/internal/domain/services/expensetype"
+	"time"
 )
 
 const invalidExpenseTypeErrorMsg = "the expense type doesn't exists"
 
 type Repository interface {
 	Add(entity *models.Expense) (*models.Expense, error)
+	SearchInPeriod(startDate time.Time, endDate time.Time) ([]*models.Expense, error)
 }
+
 type Service interface {
 	Add(command *AddCommand) (*models.Expense, error)
+	SearchInPeriod(command *SearchInPeriodCommand) ([]*models.Expense, error)
 }
 
 type service struct {
@@ -43,6 +47,12 @@ func (s service) Add(command *AddCommand) (*models.Expense, error) {
 	}
 
 	return createdExpense, nil
+}
+
+func (s service) SearchInPeriod(command *SearchInPeriodCommand) ([]*models.Expense, error) {
+	expenses, _ := s.repository.SearchInPeriod(command.startDate, command.endDate)
+
+	return expenses, nil
 }
 
 type UnexpectedError struct {
