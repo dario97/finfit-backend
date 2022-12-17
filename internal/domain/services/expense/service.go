@@ -50,8 +50,10 @@ func (s service) Add(command *AddCommand) (*models.Expense, error) {
 }
 
 func (s service) SearchInPeriod(command *SearchInPeriodCommand) ([]*models.Expense, error) {
-	expenses, _ := s.repository.SearchInPeriod(command.startDate, command.endDate)
-
+	expenses, err := s.repository.SearchInPeriod(command.startDate, command.endDate)
+	if err != nil {
+		return nil, UnexpectedError{Msg: err.Error()}
+	}
 	return expenses, nil
 }
 

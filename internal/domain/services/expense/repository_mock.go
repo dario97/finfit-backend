@@ -31,8 +31,11 @@ func (r *RepositoryMock) Add(expense *models.Expense) (*models.Expense, error) {
 func (r *RepositoryMock) SearchInPeriod(startDate time.Time, endDate time.Time) ([]*models.Expense, error) {
 	args := r.Called(startDate, endDate)
 
+	expenses := args.Get(0)
 	err := args.Error(1)
-	if err != nil {
+	if err == nil && expenses == nil {
+		return nil, nil
+	} else if err != nil {
 		return nil, err
 	} else {
 		return args.Get(0).([]*models.Expense), nil

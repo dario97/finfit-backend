@@ -100,6 +100,24 @@ func (suite *ExpenseServiceTestSuite) TestGivenThatExpenseTypeNotExists_WhenAdd_
 	assert.Equal(suite.T(), expectedError, err)
 }
 
+func (suite *ExpenseServiceTestSuite) TestGivenThatSaveExpenseIntoDatabaseFails_WhenAdd_ThenReturnError() {
+	expenseToCreate := getExpense()
+
+	repoError := errors.New("fail to save expense")
+	expectedError := UnexpectedError{
+		Msg: repoError.Error(),
+	}
+
+	suite.expenseTypeServiceMock.MockGetByID([]interface{}{expenseToCreate.ExpenseType.Id}, []interface{}{expenseToCreate.ExpenseType, nil}, 1)
+	suite.expenseRepositoryMock.MockAdd([]interface{}{expenseToCreate}, []interface{}{nil, repoError}, 1)
+
+	actualCreatedExpense, err := suite.service.Add(buildAddCommandFromExpense(expenseToCreate))
+
+	assert.Nil(suite.T(), actualCreatedExpense)
+	assert.NotNil(suite.T(), err, "Error must not be nil")
+	assert.Equal(suite.T(), expectedError, err)
+}
+
 func (suite *ExpenseServiceTestSuite) TestGivenAPeriod_WhenSearchInPeriod_ThenReturnAListOfExpenses() {
 	expensesToReturn := suite.getExpenses()
 
@@ -120,22 +138,20 @@ func (suite *ExpenseServiceTestSuite) TestGivenAPeriod_WhenSearchInPeriod_ThenRe
 	}
 }
 
-func (suite *ExpenseServiceTestSuite) TestGivenThatSaveExpenseIntoDatabaseFails_WhenAdd_ThenReturnError() {
-	expenseToCreate := getExpense()
+func (suite *ExpenseServiceTestSuite) TestGivenThatRepositoryFails_WhenSearchInPeriod_ThenReturnError() {
+	searchInPeriodCommand, _ := NewSearchInPeriodCommand(
+		time.Date(2022, 5, 23, 0, 0, 0, 0, time.Local),
+		time.Date(2022, 8, 23, 0, 0, 0, 0, time.Local))
 
-	repoError := errors.New("fail to save expense")
-	expectedError := UnexpectedError{
-		Msg: repoError.Error(),
-	}
+	suite.expenseRepositoryMock.MockSearchInPeriod(
+		[]interface{}{searchInPeriodCommand.startDate, searchInPeriodCommand.endDate},
+		[]interface{}{nil, errors.New("fail to get expenses")},
+		1)
 
-	suite.expenseTypeServiceMock.MockGetByID([]interface{}{expenseToCreate.ExpenseType.Id}, []interface{}{expenseToCreate.ExpenseType, nil}, 1)
-	suite.expenseRepositoryMock.MockAdd([]interface{}{expenseToCreate}, []interface{}{nil, repoError}, 1)
+	actualExpenses, err := suite.service.SearchInPeriod(searchInPeriodCommand)
 
-	actualCreatedExpense, err := suite.service.Add(buildAddCommandFromExpense(expenseToCreate))
-
-	assert.Nil(suite.T(), actualCreatedExpense)
-	assert.NotNil(suite.T(), err, "Error must not be nil")
-	assert.Equal(suite.T(), expectedError, err)
+	require.ErrorAs(suite.T(), err, &UnexpectedError{})
+	require.Nil(suite.T(), actualExpenses)
 }
 
 func (suite *ExpenseServiceTestSuite) getExpenses() []*models.Expense {
