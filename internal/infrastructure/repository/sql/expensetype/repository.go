@@ -2,15 +2,15 @@ package expensetype
 
 import (
 	"finfit-backend/internal/domain/models"
+	"finfit-backend/internal/infrastructure/repository/sql"
 	"github.com/google/uuid"
-	"github.com/jinzhu/gorm"
 )
 
 type repository struct {
-	db *gorm.DB
+	db sql.Database
 }
 
-func NewRepository(db *gorm.DB) *repository {
+func NewRepository(db sql.Database) *repository {
 	return &repository{db: db}
 }
 

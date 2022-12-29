@@ -1,7 +1,7 @@
 package expense
 
 import (
-	"finfit-backend/internal/infrastructure/repository/mysql/expensetype"
+	"finfit-backend/internal/infrastructure/repository/sql/expensetype"
 	"time"
 )
 

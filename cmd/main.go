@@ -6,5 +6,6 @@ import (
 
 func main() {
 	defer application.Finish()
+	application.LoadConfigurations()
 	application.Start()
 }
