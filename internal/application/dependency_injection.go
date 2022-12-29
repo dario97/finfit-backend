@@ -97,7 +97,9 @@ func wireGenericFieldsValidator() {
 	english := en.New()
 	uni := ut.New(english, english)
 	translator, _ := uni.GetTranslator("en")
+
 	_ = en2.RegisterDefaultTranslations(validate, translator)
 
-	GenericFieldsValidator = fieldvalidation.NewGenericFieldsValidator(validate, translator)
+	fieldvalidation.RegisterValidations(validate, translator)
+	GenericFieldsValidator = fieldvalidation.NewFieldsValidator(validate, translator)
 }

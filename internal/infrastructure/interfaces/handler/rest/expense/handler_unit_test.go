@@ -5,7 +5,7 @@ import (
 	"finfit-backend/internal/domain/models"
 	expenseService "finfit-backend/internal/domain/services/expense"
 	"finfit-backend/pkg"
-	fieldvalidation2 "finfit-backend/pkg/fieldvalidation"
+	"finfit-backend/pkg/fieldvalidation"
 	"fmt"
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
@@ -227,7 +227,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithBadFormattedExpenseDate_Whe
 
 	requestBody := fmt.Sprintf(`{"amount":%f,"expense_date":"%s","description":"%s","expense_type":{"id":"%s","name":"%s"}}`,
 		expenseToCreate.Amount,
-		"2013-12-12",
+		"12-2013-12",
 		expenseToCreate.Description,
 		expenseToCreate.ExpenseType.Id.String(),
 		expenseToCreate.ExpenseType.Name)
@@ -237,7 +237,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithBadFormattedExpenseDate_Whe
 	expectedResponseBody := fmt.Sprintf(errorResponse,
 		http.StatusBadRequest,
 		fieldValidationErrorMessage,
-		`[{"field":"ExpenseDate","message":"ExpenseDate does not match the 02-01-2006 format"}]`)
+		`[{"field":"ExpenseDate","message":"ExpenseDate does not match the 2006-01-02 format"}]`)
 
 	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
 
@@ -254,7 +254,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutExpenseType_WhenAdd_Then
 
 	requestBody := fmt.Sprintf(`{"amount":%f,"expense_date":"%s","description":"%s"}`,
 		expenseToCreate.Amount,
-		"01-02-2013",
+		"2013-02-01",
 		expenseToCreate.Description)
 	c, rec := suite.mockAddExpenseRequest(requestBody)
 	expectedResponseBody := fmt.Sprintf(errorResponse,
@@ -271,7 +271,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutExpenseType_WhenAdd_Then
 }
 
 func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutExpenseTypeID_WhenAdd_ThenReturnErrorWithBadRequestStatus() {
-	requestBody := `{"amount":100.2,"description":"Lomitos","expense_date":"15-03-2022","expense_type":{"name":"Delivery"}}`
+	requestBody := `{"amount":100.2,"description":"Lomitos","expense_date":"2022-03-15","expense_type":{"name":"Delivery"}}`
 	c, rec := suite.mockAddExpenseRequest(requestBody)
 	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"ID\",\"message\":\"ID is a required field\"}]}\n"
 
@@ -284,7 +284,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutExpenseTypeID_WhenAdd_Th
 }
 
 func (suite *HandlerTestSuite) TestGivenAnExpenseWithNoUIIDExpenseTypeID_WhenAdd_ThenReturnErrorWithBadRequestStatus() {
-	requestBody := `{"amount":100.2,"description":"Lomitos","expense_date":"15-03-2022","expense_type":{"id":"fruta-uuid","name":"Delivery"}}`
+	requestBody := `{"amount":100.2,"description":"Lomitos","expense_date":"2022-03-15","expense_type":{"id":"fruta-uuid","name":"Delivery"}}`
 	c, rec := suite.mockAddExpenseRequest(requestBody)
 	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"ID\",\"message\":\"ID must be a valid UUID\"}]}\n"
 
@@ -298,7 +298,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithNoUIIDExpenseTypeID_WhenAdd
 
 func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutExpenseTypeName_WhenAdd_ThenReturnErrorWithBadRequestStatus() {
 	id := pkg.NewUUID()
-	requestBody := fmt.Sprintf(`{"amount":100.2,"description":"Lomitos","expense_date":"15-03-2022","expense_type":{"id":"%s"}}`, id.String())
+	requestBody := fmt.Sprintf(`{"amount":100.2,"description":"Lomitos","expense_date":"2022-03-15","expense_type":{"id":"%s"}}`, id.String())
 	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"Name\",\"message\":\"Name is a required field\"}]}\n"
 	c, rec := suite.mockAddExpenseRequest(requestBody)
 
@@ -312,7 +312,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutExpenseTypeName_WhenAdd_
 
 func (suite *HandlerTestSuite) TestGivenAnExpenseWithEmptyExpenseTypeName_WhenAdd_ThenReturnErrorWithBadRequestStatus() {
 	id := pkg.NewUUID()
-	requestBody := fmt.Sprintf(`{"amount":100.2,"description":"Lomitos","expense_date":"15-03-2022","expense_type":{"id":"%s","name":""}}`, id.String())
+	requestBody := fmt.Sprintf(`{"amount":100.2,"description":"Lomitos","expense_date":"2022-03-15","expense_type":{"id":"%s","name":""}}`, id.String())
 	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"Name\",\"message\":\"Name is a required field\"}]}\n"
 	c, rec := suite.mockAddExpenseRequest(requestBody)
 
@@ -324,26 +324,144 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithEmptyExpenseTypeName_WhenAd
 	assert.Equal(suite.T(), expectedResponseBody, rec.Body.String())
 }
 
-func (suite *HandlerTestSuite) mockAddExpenseRequest(body string) (echo.Context, *httptest.ResponseRecorder) {
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/expense", strings.NewReader(body))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	return e.NewContext(req, rec), rec
+func (suite *HandlerTestSuite) TestGivenAPeriod_WhenSearchInPeriod_ThenReturnStatusOkWithListOfExpenses() {
+	expectedExpensesToReturn := suite.getExpenses()
+	startDate := time.Date(2022, 5, 13, 0, 0, 0, 0, time.UTC)
+	endDate := time.Date(2022, 8, 13, 0, 0, 0, 0, time.UTC)
+	searchInPeriodCommand, _ := expenseService.NewSearchInPeriodCommand(startDate, endDate)
+	suite.expenseServiceMock.MockSearchInPeriod([]interface{}{searchInPeriodCommand}, []interface{}{expectedExpensesToReturn, nil}, 1)
+
+	c, rec := suite.mockSearchInPeriodRequest(fmt.Sprintf("start_date=%s&end_date=%s", startDate.Format(dateFormat), endDate.Format(dateFormat)))
+
+	expectedResponseBody := suite.getSearchResponseBodyFromExpenses(expectedExpensesToReturn)
+
+	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
+
+	if assert.NoError(suite.T(), handler.SearchInPeriod(c)) {
+		assert.Equal(suite.T(), http.StatusOK, rec.Code)
+		assert.Equal(suite.T(), expectedResponseBody, rec.Body.String())
+	}
 }
 
-func (suite *HandlerTestSuite) getValidator() fieldvalidation2.FieldsValidator {
+func (suite *HandlerTestSuite) TestGivenThatServiceFails_WhenSearchInPeriod_ThenReturnStatusInternalServerError() {
+	startDate := time.Date(2022, 5, 13, 0, 0, 0, 0, time.UTC)
+	endDate := time.Date(2022, 8, 13, 0, 0, 0, 0, time.UTC)
+	searchInPeriodCommand, _ := expenseService.NewSearchInPeriodCommand(startDate, endDate)
+	expectedServiceError := expenseService.UnexpectedError{Msg: "fail getting expenses"}
+	suite.expenseServiceMock.MockSearchInPeriod([]interface{}{searchInPeriodCommand}, []interface{}{nil, expectedServiceError}, 1)
+
+	c, rec := suite.mockSearchInPeriodRequest(fmt.Sprintf("start_date=%s&end_date=%s", startDate.Format(dateFormat), endDate.Format(dateFormat)))
+
+	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusInternalServerError, unexpectedErrorMessage, fmt.Sprintf(`"%s"`, expectedServiceError.Error()))
+
+	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
+
+	handler.SearchInPeriod(c)
+
+	assert.Equal(suite.T(), http.StatusInternalServerError, rec.Code)
+	assert.Equal(suite.T(), expectedResponseBody, rec.Body.String())
+}
+
+func (suite *HandlerTestSuite) TestGivenThatStartDateParamNotExists_WhenSearchInPeriod_ThenReturnStatusBadRequest() {
+	endDate := time.Date(2022, 8, 13, 0, 0, 0, 0, time.UTC)
+
+	c, rec := suite.mockSearchInPeriodRequest(fmt.Sprintf("end_date=%s", endDate.Format(dateFormat)))
+
+	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, "[{\"field\":\"StartDate\",\"message\":\"StartDate is a required field\"}]")
+
+	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
+
+	handler.SearchInPeriod(c)
+
+	assert.Equal(suite.T(), http.StatusBadRequest, rec.Code)
+	assert.Equal(suite.T(), expectedResponseBody, rec.Body.String())
+}
+
+func (suite *HandlerTestSuite) TestGivenThatEndDateParamNotExists_WhenSearchInPeriod_ThenReturnStatusBadRequest() {
+	startDate := time.Date(2022, 8, 13, 0, 0, 0, 0, time.UTC)
+
+	c, rec := suite.mockSearchInPeriodRequest(fmt.Sprintf("start_date=%s", startDate.Format(dateFormat)))
+
+	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, "[{\"field\":\"EndDate\",\"message\":\"EndDate is a required field\"}]")
+
+	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
+
+	handler.SearchInPeriod(c)
+
+	assert.Equal(suite.T(), http.StatusBadRequest, rec.Code)
+	assert.Equal(suite.T(), expectedResponseBody, rec.Body.String())
+}
+
+func (suite *HandlerTestSuite) TestGivenThatStartDateParamHasBadFormat_WhenSearchInPeriod_ThenReturnStatusBadRequest() {
+	startDate := time.Date(2022, 8, 13, 0, 0, 0, 0, time.UTC)
+	endDate := time.Date(2022, 8, 13, 0, 0, 0, 0, time.UTC)
+
+	c, rec := suite.mockSearchInPeriodRequest(fmt.Sprintf("start_date=%s&end_date=%s", startDate.Format("02-01-2006"), endDate.Format(dateFormat)))
+
+	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, "[{\"field\":\"StartDate\",\"message\":\"StartDate does not match the 2006-01-02 format\"}]")
+
+	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
+
+	handler.SearchInPeriod(c)
+
+	assert.Equal(suite.T(), http.StatusBadRequest, rec.Code)
+	assert.Equal(suite.T(), expectedResponseBody, rec.Body.String())
+}
+
+func (suite *HandlerTestSuite) TestGivenThatEndDateParamHasBadFormat_WhenSearchInPeriod_ThenReturnStatusBadRequest() {
+	startDate := time.Date(2022, 8, 13, 0, 0, 0, 0, time.UTC)
+	endDate := time.Date(2022, 8, 13, 0, 0, 0, 0, time.UTC)
+
+	c, rec := suite.mockSearchInPeriodRequest(fmt.Sprintf("start_date=%s&end_date=%s", startDate.Format(dateFormat), endDate.Format("02-01-2006")))
+
+	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, "[{\"field\":\"EndDate\",\"message\":\"EndDate does not match the 2006-01-02 format\"}]")
+
+	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
+
+	handler.SearchInPeriod(c)
+
+	assert.Equal(suite.T(), http.StatusBadRequest, rec.Code)
+	assert.Equal(suite.T(), expectedResponseBody, rec.Body.String())
+}
+
+func (suite *HandlerTestSuite) TestGivenThatStartDateIsGreaterThanEndDate_WhenSearchInPeriod_ThenReturnStatusBadRequest() {
+	startDate := time.Date(2022, 9, 13, 0, 0, 0, 0, time.UTC)
+	endDate := time.Date(2022, 8, 13, 0, 0, 0, 0, time.UTC)
+
+	c, rec := suite.mockSearchInPeriodRequest(fmt.Sprintf("start_date=%s&end_date=%s", startDate.Format(dateFormat), endDate.Format(dateFormat)))
+
+	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, "[{\"field\":\"EndDate\",\"message\":\"EndDate does not match the 02-01-2006 format\"}]")
+
+	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
+
+	handler.SearchInPeriod(c)
+
+	assert.Equal(suite.T(), http.StatusBadRequest, rec.Code)
+	assert.Equal(suite.T(), expectedResponseBody, rec.Body.String())
+}
+
+func (suite *HandlerTestSuite) getExpenses() []*models.Expense {
+	return []*models.Expense{models.NewExpense(100.2,
+		time.Date(2022, time.May, 15, 0, 0, 0, 0, time.UTC),
+		"Lomitos", models.NewExpenseType("Delivery")),
+		models.NewExpense(100.2,
+			time.Date(2022, time.September, 15, 0, 0, 0, 0, time.UTC),
+			"Lomitos", models.NewExpenseType("Delivery"))}
+}
+
+func (suite *HandlerTestSuite) getValidator() fieldvalidation.FieldsValidator {
 	validate := validator.New()
 	english := en.New()
 	uni := ut.New(english, english)
 	translator, _ := uni.GetTranslator("en")
 	_ = en2.RegisterDefaultTranslations(validate, translator)
 
-	return fieldvalidation2.NewGenericFieldsValidator(validate, translator)
+	validate.RegisterValidation(fieldvalidation.LteStrDateFieldValidationTag, fieldvalidation.LteStrDateField)
+	return fieldvalidation.NewFieldsValidator(validate, translator)
 }
 
 func (suite *HandlerTestSuite) getAddExpenseResponseFromExpense(expense *models.Expense) string {
-	response := expenseResponse{
+	response := expenseResponse{Expense: expenseBody{
 		ID:          expense.Id.String(),
 		Amount:      expense.Amount,
 		ExpenseDate: expense.ExpenseDate.Format(dateFormat),
@@ -352,7 +470,7 @@ func (suite *HandlerTestSuite) getAddExpenseResponseFromExpense(expense *models.
 			ID:   expense.ExpenseType.Id.String(),
 			Name: expense.ExpenseType.Name,
 		},
-	}
+	}}
 
 	bodyBytes, _ := json.Marshal(response)
 	return string(bodyBytes) + "\n"
@@ -371,4 +489,47 @@ func (suite *HandlerTestSuite) getAddExpenseRequestBodyFromExpense(expense *mode
 
 	bodyBytes, _ := json.Marshal(addExpenseBody)
 	return string(bodyBytes)
+}
+
+func (suite *HandlerTestSuite) mockAddExpenseRequest(body string) (echo.Context, *httptest.ResponseRecorder) {
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodPost, "/expense", strings.NewReader(body))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	return e.NewContext(req, rec), rec
+}
+
+func (suite *HandlerTestSuite) mockSearchInPeriodRequest(queryParams string) (echo.Context, *httptest.ResponseRecorder) {
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet,
+		fmt.Sprintf("/expense/search?%s",
+			queryParams),
+		nil)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	return e.NewContext(req, rec), rec
+}
+
+func (suite *HandlerTestSuite) getSearchResponseBodyFromExpenses(expenses []*models.Expense) string {
+	expenseBodies := []expenseBody{}
+	for _, expense := range expenses {
+		expenseBodies = append(expenseBodies, suite.mapExpenseToExpenseBody(expense))
+	}
+
+	response := searchResponse{Expenses: expenseBodies}
+	bodyBytes, _ := json.Marshal(response)
+	return string(bodyBytes) + "\n"
+}
+
+func (suite *HandlerTestSuite) mapExpenseToExpenseBody(expense *models.Expense) expenseBody {
+	return expenseBody{
+		ID:          expense.Id.String(),
+		Amount:      expense.Amount,
+		ExpenseDate: expense.ExpenseDate.Format(dateFormat),
+		Description: expense.Description,
+		ExpenseType: expenseTypeBody{
+			ID:   expense.ExpenseType.Id.String(),
+			Name: expense.ExpenseType.Name,
+		},
+	}
 }

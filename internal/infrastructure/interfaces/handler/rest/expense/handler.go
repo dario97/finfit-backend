@@ -13,14 +13,17 @@ import (
 )
 
 const (
-	fieldValidationErrorMessage = "some fields are invalid"
-	bodyWasInvalidErrorMessage  = "body was invalid"
-	unexpectedErrorMessage      = "unexpected error"
-	dateFormat                  = "02-01-2006"
+	fieldValidationErrorMessage  = "some fields are invalid"
+	bodyIsInvalidErrorMessage    = "body is invalid"
+	paramsAreInvalidErrorMessage = "params are invalid, query params start_date and end_date are required"
+	unexpectedErrorMessage       = "unexpected error"
+
+	dateFormat = "2006-01-02"
 )
 
 type Handler interface {
 	Add(context echo.Context) error
+	SearchInPeriod(ctx echo.Context) error
 }
 
 type handler struct {
@@ -39,14 +42,14 @@ func (h handler) Add(context echo.Context) error {
 	requestBody := new(addExpenseRequest)
 
 	if err := context.Bind(requestBody); err != nil {
-		return h.buildErrorResponse(context, http.StatusBadRequest, bodyWasInvalidErrorMessage, err.Error())
+		return h.buildErrorResponse(context, http.StatusBadRequest, bodyIsInvalidErrorMessage, err.Error())
 	}
 
 	if fieldValidationErrors := h.fieldsValidator.ValidateFields(requestBody); len(fieldValidationErrors) > 0 {
 		return h.buildErrorResponse(context, http.StatusBadRequest, fieldValidationErrorMessage, fieldValidationErrors)
 	}
 
-	command, err := h.mapCommandFromRequestBody(*requestBody)
+	command, err := h.mapAddCommandFromRequestBody(*requestBody)
 	if err != nil {
 		return h.buildErrorResponse(context, http.StatusBadRequest, fieldValidationErrorMessage, err.Error())
 	}
@@ -59,7 +62,32 @@ func (h handler) Add(context echo.Context) error {
 	return context.JSON(http.StatusCreated, h.mapCreatedExpenseToExpenseResponse(createdExpense))
 }
 
-func (h handler) mapCommandFromRequestBody(body addExpenseRequest) (*expense.AddCommand, error) {
+func (h handler) SearchInPeriod(context echo.Context) error {
+	requestParams := new(searchInPeriodQueryParams)
+
+	if err := context.Bind(requestParams); err != nil {
+		return h.buildErrorResponse(context, http.StatusBadRequest, paramsAreInvalidErrorMessage, err.Error())
+	}
+
+	if fieldValidationErrors := h.fieldsValidator.ValidateFields(requestParams); len(fieldValidationErrors) > 0 {
+		return h.buildErrorResponse(context, http.StatusBadRequest, fieldValidationErrorMessage, fieldValidationErrors)
+	}
+
+	command, err := h.mapSearchCommandFromRequestBody(*requestParams)
+	if err != nil {
+		return h.buildErrorResponse(context, http.StatusBadRequest, fieldValidationErrorMessage, err.Error())
+	}
+
+	expenses, err := h.service.SearchInPeriod(command)
+	if err != nil {
+		return h.manageServiceError(context, err)
+	}
+
+	return context.JSON(http.StatusOK, h.mapExpensesToSearchResponse(expenses))
+
+}
+
+func (h handler) mapAddCommandFromRequestBody(body addExpenseRequest) (*expense.AddCommand, error) {
 	date, _ := time.Parse(dateFormat, body.ExpenseDate)
 	expenseTypeId, err := uuid.Parse(body.ExpenseType.ID)
 	if err != nil {
@@ -72,8 +100,15 @@ func (h handler) mapCommandFromRequestBody(body addExpenseRequest) (*expense.Add
 	})
 }
 
+func (h handler) mapSearchCommandFromRequestBody(params searchInPeriodQueryParams) (*expense.SearchInPeriodCommand, error) {
+	startDate, _ := time.Parse(dateFormat, params.StartDate)
+	endDate, _ := time.Parse(dateFormat, params.EndDate)
+
+	return expense.NewSearchInPeriodCommand(startDate, endDate)
+}
+
 func (h handler) mapCreatedExpenseToExpenseResponse(expense *models.Expense) expenseResponse {
-	return expenseResponse{
+	return expenseResponse{Expense: expenseBody{
 		ID:          expense.Id.String(),
 		Amount:      expense.Amount,
 		ExpenseDate: expense.ExpenseDate.Format(dateFormat),
@@ -82,7 +117,7 @@ func (h handler) mapCreatedExpenseToExpenseResponse(expense *models.Expense) exp
 			ID:   expense.ExpenseType.Id.String(),
 			Name: expense.ExpenseType.Name,
 		},
-	}
+	}}
 }
 
 func (h handler) buildErrorResponse(ctx echo.Context, statusCode int, errorMessage string, errorDetail interface{}) error {
@@ -98,11 +133,38 @@ func (h handler) manageServiceError(ctx echo.Context, err error) error {
 	}
 }
 
+func (h handler) mapExpensesToSearchResponse(expenses []*models.Expense) searchResponse {
+	expenseBodies := []expenseBody{}
+	for _, expense := range expenses {
+		expenseBodies = append(expenseBodies, h.mapExpenseToExpenseBody(expense))
+	}
+
+	return searchResponse{Expenses: expenseBodies}
+}
+
+func (h handler) mapExpenseToExpenseBody(expense *models.Expense) expenseBody {
+	return expenseBody{
+		ID:          expense.Id.String(),
+		Amount:      expense.Amount,
+		ExpenseDate: expense.ExpenseDate.Format(dateFormat),
+		Description: expense.Description,
+		ExpenseType: expenseTypeBody{
+			ID:   expense.ExpenseType.Id.String(),
+			Name: expense.ExpenseType.Name,
+		},
+	}
+}
+
 type addExpenseRequest struct {
 	Amount      float64          `json:"amount" validate:"required,gt=0"`
-	ExpenseDate string           `json:"expense_date" validate:"required,datetime=02-01-2006"`
+	ExpenseDate string           `json:"expense_date" validate:"required,datetime=2006-01-02"`
 	Description string           `json:"description"`
 	ExpenseType *expenseTypeBody `json:"expense_type" validate:"required"`
+}
+
+type searchInPeriodQueryParams struct {
+	StartDate string `query:"start_date" validate:"required,datetime=2006-01-02,lteStrDateField=EndDate0x2C2006-01-02"`
+	EndDate   string `query:"end_date" validate:"required,datetime=2006-01-02"`
 }
 
 type expenseTypeBody struct {
@@ -110,10 +172,18 @@ type expenseTypeBody struct {
 	Name string `json:"name" validate:"required"`
 }
 
-type expenseResponse struct {
+type expenseBody struct {
 	ID          string          `json:"id"`
 	Amount      float64         `json:"amount"`
 	ExpenseDate string          `json:"expense_date"`
 	Description string          `json:"description"`
 	ExpenseType expenseTypeBody `json:"expense_type"`
+}
+
+type expenseResponse struct {
+	Expense expenseBody `json:"expense"`
+}
+
+type searchResponse struct {
+	Expenses []expenseBody `json:"expenses"`
 }

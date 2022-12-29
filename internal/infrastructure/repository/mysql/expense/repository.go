@@ -3,6 +3,7 @@ package expense
 import (
 	"finfit-backend/internal/domain/models"
 	"github.com/jinzhu/gorm"
+	"time"
 )
 
 type repository struct {
@@ -22,6 +23,11 @@ func (r repository) Add(expense *models.Expense) (*models.Expense, error) {
 	}
 
 	return expense, nil
+}
+
+func (r repository) SearchInPeriod(startDate time.Time, endDate time.Time) ([]*models.Expense, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (r repository) mapExpenseDBModelFromExpense(expenseToAdd *models.Expense) dbModel {
