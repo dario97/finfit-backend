@@ -15,18 +15,26 @@ type fieldsValidator struct {
 	translator ut.Translator
 }
 
-func RegisterFieldsValidator() *fieldsValidator {
+func RegisterFieldsValidator(customValidations []Validation, customTranslations []Translation) (*fieldsValidator, error) {
 	validate := validator.New()
 	english := en.New()
 	uni := ut.New(english, english)
 	translator, _ := uni.GetTranslator("en")
-	RegisterValidations(validate)
-	_ = RegisterTranslations(validate, translator)
+
+	err := registerValidations(validate, customValidations)
+	if err != nil {
+		return nil, err
+	}
+
+	err = registerTranslations(validate, translator, customTranslations)
+	if err != nil {
+		return nil, err
+	}
 
 	return &fieldsValidator{
 		validator:  validate,
 		translator: translator,
-	}
+	}, nil
 }
 
 func (receiver fieldsValidator) ValidateFields(s interface{}) []FieldError {

@@ -7,20 +7,26 @@ import (
 	"strings"
 )
 
-func RegisterTranslations(validate *validator.Validate, translator ut.Translator) error {
+type Translation struct {
+	tag              string
+	formattedMessage string
+	override         bool
+	customRegisFunc  validator.RegisterTranslationsFunc
+	customTransFunc  validator.TranslationFunc
+}
+
+func NewTranslation(tag string, formattedMessage string, override bool, customRegisFunc validator.RegisterTranslationsFunc, customTransFunc validator.TranslationFunc) *Translation {
+	return &Translation{tag: tag, formattedMessage: formattedMessage, override: override, customRegisFunc: customRegisFunc, customTransFunc: customTransFunc}
+}
+
+func registerTranslations(validate *validator.Validate, translator ut.Translator, customTranslations []Translation) error {
 	_ = en2.RegisterDefaultTranslations(validate, translator)
 
-	translations := []struct {
-		tag             string
-		translation     string
-		override        bool
-		customRegisFunc validator.RegisterTranslationsFunc
-		customTransFunc validator.TranslationFunc
-	}{
+	translations := []Translation{
 		{
-			tag:         LteStrDateFieldValidationTag,
-			translation: "{0} must be before or equal to {1}",
-			override:    false,
+			tag:              LteStrDateFieldValidationTag,
+			formattedMessage: "{0} must be before or equal to {1}",
+			override:         false,
 			customTransFunc: func(ut ut.Translator, fe validator.FieldError) string {
 				params := strings.Split(fe.Param(), ",")
 				t, err := ut.T(fe.Tag(), fe.Field(), params[0])
@@ -33,6 +39,8 @@ func RegisterTranslations(validate *validator.Validate, translator ut.Translator
 		},
 	}
 
+	translations = append(translations, customTranslations...)
+
 	var err error
 
 	for _, t := range translations {
@@ -40,11 +48,11 @@ func RegisterTranslations(validate *validator.Validate, translator ut.Translator
 		if t.customTransFunc != nil && t.customRegisFunc != nil {
 			err = validate.RegisterTranslation(t.tag, translator, t.customRegisFunc, t.customTransFunc)
 		} else if t.customTransFunc != nil && t.customRegisFunc == nil {
-			err = validate.RegisterTranslation(t.tag, translator, registrationFunc(t.tag, t.translation, t.override), t.customTransFunc)
+			err = validate.RegisterTranslation(t.tag, translator, registrationFunc(t.tag, t.formattedMessage, t.override), t.customTransFunc)
 		} else if t.customTransFunc == nil && t.customRegisFunc != nil {
 			err = validate.RegisterTranslation(t.tag, translator, t.customRegisFunc, translateFunc)
 		} else {
-			err = validate.RegisterTranslation(t.tag, translator, registrationFunc(t.tag, t.translation, t.override), translateFunc)
+			err = validate.RegisterTranslation(t.tag, translator, registrationFunc(t.tag, t.formattedMessage, t.override), translateFunc)
 		}
 
 		if err != nil {

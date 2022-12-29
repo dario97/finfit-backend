@@ -6,6 +6,15 @@ import (
 	"time"
 )
 
+type Validation struct {
+	tag      string
+	function validator.Func
+}
+
+func NewValidation(tag string, function validator.Func) *Validation {
+	return &Validation{tag: tag, function: function}
+}
+
 const LteStrDateFieldValidationTag = "lteStrDateField"
 
 func LteStrDateField(fieldLevel validator.FieldLevel) bool {
@@ -29,9 +38,22 @@ func LteStrDateField(fieldLevel validator.FieldLevel) bool {
 	return date.Before(dateToCompare) || date.Equal(dateToCompare)
 }
 
-func RegisterValidations(validate *validator.Validate) {
-	err := validate.RegisterValidation(LteStrDateFieldValidationTag, LteStrDateField)
-	if err != nil {
-		panic(err)
+func registerValidations(validate *validator.Validate, customValidations []Validation) error {
+	validations := []Validation{
+		{
+			tag:      LteStrDateFieldValidationTag,
+			function: LteStrDateField,
+		},
 	}
+
+	validations = append(validations, customValidations...)
+
+	for _, validation := range validations {
+		err := validate.RegisterValidation(validation.tag, validation.function)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

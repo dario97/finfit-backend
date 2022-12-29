@@ -446,7 +446,8 @@ func (suite *HandlerTestSuite) getExpenses() []*models.Expense {
 }
 
 func (suite *HandlerTestSuite) getValidator() fieldvalidation.FieldsValidator {
-	return fieldvalidation.RegisterFieldsValidator()
+	validator, _ := fieldvalidation.RegisterFieldsValidator(nil, nil)
+	return validator
 }
 
 func (suite *HandlerTestSuite) getAddExpenseResponseFromExpense(expense *models.Expense) string {

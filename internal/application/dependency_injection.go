@@ -89,5 +89,5 @@ func wireDbConnection() {
 }
 
 func wireGenericFieldsValidator() {
-	GenericFieldsValidator = fieldvalidation.RegisterFieldsValidator()
+	GenericFieldsValidator, _ = fieldvalidation.RegisterFieldsValidator(nil, nil)
 }
