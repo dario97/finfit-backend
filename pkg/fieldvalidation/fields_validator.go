@@ -1,6 +1,7 @@
 package fieldvalidation
 
 import (
+	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 )
@@ -14,9 +15,16 @@ type fieldsValidator struct {
 	translator ut.Translator
 }
 
-func NewFieldsValidator(validator *validator.Validate, translator ut.Translator) *fieldsValidator {
+func RegisterFieldsValidator() *fieldsValidator {
+	validate := validator.New()
+	english := en.New()
+	uni := ut.New(english, english)
+	translator, _ := uni.GetTranslator("en")
+	RegisterValidations(validate)
+	_ = RegisterTranslations(validate, translator)
+
 	return &fieldsValidator{
-		validator:  validator,
+		validator:  validate,
 		translator: translator,
 	}
 }

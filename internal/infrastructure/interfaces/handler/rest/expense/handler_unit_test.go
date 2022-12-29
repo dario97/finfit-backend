@@ -7,10 +7,6 @@ import (
 	"finfit-backend/pkg"
 	"finfit-backend/pkg/fieldvalidation"
 	"fmt"
-	"github.com/go-playground/locales/en"
-	ut "github.com/go-playground/universal-translator"
-	"github.com/go-playground/validator/v10"
-	en2 "github.com/go-playground/validator/v10/translations/en"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
@@ -382,7 +378,7 @@ func (suite *HandlerTestSuite) TestGivenThatEndDateParamNotExists_WhenSearchInPe
 
 	c, rec := suite.mockSearchInPeriodRequest(fmt.Sprintf("start_date=%s", startDate.Format(dateFormat)))
 
-	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, "[{\"field\":\"EndDate\",\"message\":\"EndDate is a required field\"}]")
+	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, "[{\"field\":\"StartDate\",\"message\":\"StartDate must be before or equal to EndDate\"},{\"field\":\"EndDate\",\"message\":\"EndDate is a required field\"}]")
 
 	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
 
@@ -414,7 +410,7 @@ func (suite *HandlerTestSuite) TestGivenThatEndDateParamHasBadFormat_WhenSearchI
 
 	c, rec := suite.mockSearchInPeriodRequest(fmt.Sprintf("start_date=%s&end_date=%s", startDate.Format(dateFormat), endDate.Format("02-01-2006")))
 
-	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, "[{\"field\":\"EndDate\",\"message\":\"EndDate does not match the 2006-01-02 format\"}]")
+	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, "[{\"field\":\"StartDate\",\"message\":\"StartDate must be before or equal to EndDate\"},{\"field\":\"EndDate\",\"message\":\"EndDate does not match the 2006-01-02 format\"}]")
 
 	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
 
@@ -430,7 +426,7 @@ func (suite *HandlerTestSuite) TestGivenThatStartDateIsGreaterThanEndDate_WhenSe
 
 	c, rec := suite.mockSearchInPeriodRequest(fmt.Sprintf("start_date=%s&end_date=%s", startDate.Format(dateFormat), endDate.Format(dateFormat)))
 
-	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, "[{\"field\":\"EndDate\",\"message\":\"EndDate does not match the 02-01-2006 format\"}]")
+	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, "[{\"field\":\"StartDate\",\"message\":\"StartDate must be before or equal to EndDate\"}]")
 
 	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
 
@@ -450,14 +446,7 @@ func (suite *HandlerTestSuite) getExpenses() []*models.Expense {
 }
 
 func (suite *HandlerTestSuite) getValidator() fieldvalidation.FieldsValidator {
-	validate := validator.New()
-	english := en.New()
-	uni := ut.New(english, english)
-	translator, _ := uni.GetTranslator("en")
-	_ = en2.RegisterDefaultTranslations(validate, translator)
-
-	validate.RegisterValidation(fieldvalidation.LteStrDateFieldValidationTag, fieldvalidation.LteStrDateField)
-	return fieldvalidation.NewFieldsValidator(validate, translator)
+	return fieldvalidation.RegisterFieldsValidator()
 }
 
 func (suite *HandlerTestSuite) getAddExpenseResponseFromExpense(expense *models.Expense) string {

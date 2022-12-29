@@ -7,10 +7,6 @@ import (
 	expenseRepository "finfit-backend/internal/infrastructure/repository/mysql/expense"
 	"finfit-backend/internal/infrastructure/repository/mysql/expensetype"
 	"finfit-backend/pkg/fieldvalidation"
-	"github.com/go-playground/locales/en"
-	ut "github.com/go-playground/universal-translator"
-	"github.com/go-playground/validator/v10"
-	en2 "github.com/go-playground/validator/v10/translations/en"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	"log"
@@ -93,13 +89,5 @@ func wireDbConnection() {
 }
 
 func wireGenericFieldsValidator() {
-	validate := validator.New()
-	english := en.New()
-	uni := ut.New(english, english)
-	translator, _ := uni.GetTranslator("en")
-
-	_ = en2.RegisterDefaultTranslations(validate, translator)
-
-	fieldvalidation.RegisterValidations(validate, translator)
-	GenericFieldsValidator = fieldvalidation.NewFieldsValidator(validate, translator)
+	GenericFieldsValidator = fieldvalidation.RegisterFieldsValidator()
 }

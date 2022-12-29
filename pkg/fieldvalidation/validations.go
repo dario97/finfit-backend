@@ -1,7 +1,6 @@
 package fieldvalidation
 
 import (
-	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	"strings"
 	"time"
@@ -30,10 +29,9 @@ func LteStrDateField(fieldLevel validator.FieldLevel) bool {
 	return date.Before(dateToCompare) || date.Equal(dateToCompare)
 }
 
-func RegisterValidations(validate *validator.Validate, translator ut.Translator) {
+func RegisterValidations(validate *validator.Validate) {
 	err := validate.RegisterValidation(LteStrDateFieldValidationTag, LteStrDateField)
 	if err != nil {
 		panic(err)
 	}
-	RegisterTranslations(validate, translator)
 }
