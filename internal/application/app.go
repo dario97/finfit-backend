@@ -13,14 +13,9 @@ func LoadConfigurations() {
 	WireDbConnection = wireDbConnection
 	WireGenericFieldsValidator = wireGenericFieldsValidator
 }
-func Start() {
-	e := echo.New()
+func Start(echo *echo.Echo) {
 	injectDependencies()
-	mapRoutes(e)
-	//err := e.Start(":8090")
-	//if err != nil {
-	//	panic(err)
-	//}
+	mapRoutes(echo)
 }
 
 func Finish() {
