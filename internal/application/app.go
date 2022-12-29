@@ -11,6 +11,6 @@ func Start() {
 	_ = e.Start(":8080")
 }
 
-func Close() {
+func Finish() {
 	_ = Database.Close()
 }

@@ -5,6 +5,6 @@ import (
 )
 
 func main() {
-	defer application.Close()
+	defer application.Finish()
 	application.Start()
 }
