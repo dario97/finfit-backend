@@ -10,7 +10,6 @@ require (
 	github.com/labstack/echo/v4 v4.9.1
 	github.com/stretchr/testify v1.8.0
 	gorm.io/driver/mysql v1.4.4
-	gorm.io/driver/sqlite v1.4.3
 	gorm.io/gorm v1.24.2
 )
 
@@ -23,7 +22,6 @@ require (
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/mattn/go-colorable v0.1.11 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
-	github.com/mattn/go-sqlite3 v1.14.15 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/objx v0.4.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
