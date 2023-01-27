@@ -1,2 +1,7 @@
 .idea/
 finfit-backend.iml
+/pg_data/
+/pg_data_test/
+/finfit_pg_data/
+/finfit_pg_data_test/
+

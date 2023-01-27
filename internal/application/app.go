@@ -4,7 +4,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func LoadConfigurations() {
+func LoadDependencyConfiguration() {
 	WireExpenseTypeRepository = wireExpenseTypeRepository
 	WireExpenseRepository = wireExpenseRepository
 	WireExpenseTypeService = wireExpenseTypeService
@@ -12,10 +12,12 @@ func LoadConfigurations() {
 	WireExpenseHandler = wireExpenseHandler
 	WireDbConnection = wireDbConnection
 	WireGenericFieldsValidator = wireGenericFieldsValidator
+	WireConfigurations = wireConfigurations
 }
-func Start(echo *echo.Echo) {
+func Start(echo *echo.Echo) error {
 	injectDependencies()
 	mapRoutes(echo)
+	return echo.Start("8080")
 }
 
 func Finish() {

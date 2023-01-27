@@ -18,9 +18,11 @@ var (
 	ExpenseService         expenseService.Service
 	ExpenseTypeService     expenseTypeService.Service
 	SqlDbConnection        *sql.DB
+	Configs                Configurations
 )
 
 func injectDependencies() {
+	WireConfigurations()
 	WireDbConnection()
 	WireGenericFieldsValidator()
 	wireRepositories()
