@@ -4,7 +4,21 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func LoadDependencyConfiguration() {
+type Application interface {
+	LoadDependencyConfiguration()
+	Start() error
+	Finish()
+}
+
+type application struct {
+	echo *echo.Echo
+}
+
+func NewApplication(echo *echo.Echo) *application {
+	return &application{echo: echo}
+}
+
+func (a application) LoadDependencyConfiguration() {
 	WireExpenseTypeRepository = wireExpenseTypeRepository
 	WireExpenseRepository = wireExpenseRepository
 	WireExpenseTypeService = wireExpenseTypeService
@@ -14,12 +28,13 @@ func LoadDependencyConfiguration() {
 	WireGenericFieldsValidator = wireGenericFieldsValidator
 	WireConfigurations = wireConfigurations
 }
-func Start(echo *echo.Echo) error {
+
+func (a application) Start() error {
 	injectDependencies()
-	mapRoutes(echo)
-	return echo.Start("8080")
+	mapRoutes(a.echo)
+	return a.echo.Start("8080")
 }
 
-func Finish() {
+func (a application) Finish() {
 	_ = SqlDbConnection.Close()
 }

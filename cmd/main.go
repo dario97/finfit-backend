@@ -8,10 +8,11 @@ import (
 
 func main() {
 	log.Info("starting application...")
-	defer application.Finish()
 	e := echo.New()
-	application.LoadDependencyConfiguration()
-	err := application.Start(e)
+	app := application.NewApplication(e)
+	defer app.Finish()
+	app.LoadDependencyConfiguration()
+	err := app.Start()
 	if err != nil {
 		panic(err)
 	}
