@@ -7,16 +7,17 @@ import (
 )
 
 type repository struct {
-	db sql.Database
+	table string
+	db    sql.Database
 }
 
-func NewRepository(db sql.Database) *repository {
-	return &repository{db: db}
+func NewRepository(db sql.Database, table string) *repository {
+	return &repository{db: db, table: table}
 }
 
 func (r repository) Add(expense *models.Expense) (*models.Expense, error) {
 	expenseDbModel := r.mapExpenseDBModelFromExpense(expense)
-	result := r.db.Create(&expenseDbModel)
+	result := r.db.Table(r.table).Create(&expenseDbModel)
 
 	if err := result.Error; err != nil {
 		return nil, err
@@ -30,8 +31,8 @@ func (r repository) SearchInPeriod(startDate time.Time, endDate time.Time) ([]*m
 	panic("implement me")
 }
 
-func (r repository) mapExpenseDBModelFromExpense(expenseToAdd *models.Expense) dbModel {
-	return dbModel{
+func (r repository) mapExpenseDBModelFromExpense(expenseToAdd *models.Expense) Expense {
+	return Expense{
 		ID:            expenseToAdd.Id.String(),
 		Amount:        expenseToAdd.Amount,
 		ExpenseDate:   expenseToAdd.ExpenseDate,

@@ -2,7 +2,7 @@ package expensetype
 
 import "time"
 
-type DbModel struct {
+type ExpenseType struct {
 	ID        string `gorm:"primary_key"`
 	CreatedAt time.Time
 	UpdatedAt time.Time

@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type dbModel struct {
+type Expense struct {
 	ID            string `gorm:"primaryKey"`
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
@@ -13,5 +13,5 @@ type dbModel struct {
 	ExpenseDate   time.Time
 	Description   string
 	ExpenseTypeID string
-	ExpenseType   expensetype.DbModel
+	ExpenseType   expensetype.ExpenseType
 }

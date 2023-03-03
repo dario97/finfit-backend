@@ -35,7 +35,6 @@ services:
       - app_data:/var/lib/postgresql/database
     networks:
       - application
-      -
 volumes:
   app_data:
 

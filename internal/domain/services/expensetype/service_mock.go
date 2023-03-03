@@ -28,6 +28,10 @@ func (s *ServiceMock) GetById(id uuid.UUID) (*models.ExpenseType, error) {
 	}
 }
 
+func (s *ServiceMock) Add(command AddCommand) (*models.ExpenseType, error) {
+	return nil, nil
+}
+
 func (s *ServiceMock) MockGetByID(callArguments, returnArguments []interface{}, times int) {
 	s.On("GetById", callArguments...).Return(returnArguments...).Times(times)
 }

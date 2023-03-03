@@ -12,6 +12,7 @@ import (
 	"github.com/labstack/gommon/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 	"os"
 	"strings"
 )
@@ -42,7 +43,8 @@ type configurations struct {
 	configs map[string]string
 }
 
-func (c configurations) Load() {
+func (c *configurations) Load() {
+	c.configs = map[string]string{}
 	environmentVariables := os.Environ()
 	for _, variable := range environmentVariables {
 		keyValuePair := strings.Split(variable, "=")
@@ -50,16 +52,16 @@ func (c configurations) Load() {
 	}
 }
 
-func (c configurations) GetString(key string) string {
+func (c *configurations) GetString(key string) string {
 	return c.configs[key]
 }
 
 func wireExpenseTypeRepository() {
-	ExpenseTypeRepository = expensetype.NewRepository(Database)
+	ExpenseTypeRepository = expensetype.NewRepository(Database, "expense_type")
 }
 
 func wireExpenseRepository() {
-	ExpenseRepository = expense.NewRepository(Database)
+	ExpenseRepository = expense.NewRepository(Database, "expense")
 }
 
 func wireExpenseTypeService() {
@@ -84,13 +86,14 @@ func wireDbConnection() {
 		Configs.GetString(databasePasswordConfigKey),
 		Configs.GetString(databaseNameConfigKey))
 	sqlDB, err := sql.Open(Configs.GetString(databaseDriverConfigKey), dsn)
+	log.Info("DSN: " + dsn)
 	if err != nil {
 		log.Panic(err)
 	}
 
 	db, err := gorm.Open(postgres.New(postgres.Config{
 		Conn: sqlDB,
-	}), &gorm.Config{})
+	}), &gorm.Config{NamingStrategy: schema.NamingStrategy{TablePrefix: "public"}})
 
 	if err != nil {
 		log.Panic(err)
@@ -106,6 +109,6 @@ func wireGenericFieldsValidator() {
 }
 
 func wireConfigurations() {
-	Configs = configurations{}
+	Configs = &configurations{}
 	Configs.Load()
 }

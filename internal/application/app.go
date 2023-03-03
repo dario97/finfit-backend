@@ -32,9 +32,11 @@ func (a application) LoadDependencyConfiguration() {
 func (a application) Start() error {
 	injectDependencies()
 	mapRoutes(a.echo)
-	return a.echo.Start("8080")
+	return a.echo.Start(":8080")
 }
 
 func (a application) Finish() {
-	_ = SqlDbConnection.Close()
+	if SqlDbConnection != nil {
+		_ = SqlDbConnection.Close()
+	}
 }

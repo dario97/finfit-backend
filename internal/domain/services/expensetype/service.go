@@ -10,6 +10,7 @@ type Repository interface {
 }
 type Service interface {
 	GetById(id uuid.UUID) (*models.ExpenseType, error)
+	Add(command AddCommand) (*models.ExpenseType, error)
 }
 
 type service struct {
@@ -27,6 +28,10 @@ func (s service) GetById(id uuid.UUID) (*models.ExpenseType, error) {
 	}
 
 	return expenseType, nil
+}
+
+func (s service) Add(command AddCommand) (*models.ExpenseType, error) {
+	return nil, nil
 }
 
 type UnexpectedError struct {
