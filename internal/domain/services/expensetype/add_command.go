@@ -10,7 +10,7 @@ type AddCommand struct {
 }
 
 func NewAddCommand(name string) (*AddCommand, error) {
-	if pkg.IsEmptyOrBlankString(name) {
+	if pkg.IsEmptyOrBlankString(name) || !pkg.HasMin(name, 3) || pkg.ExceedsMax(name, 32) {
 		return nil, errors.New("invalid command")
 	}
 	return &AddCommand{name: name}, nil

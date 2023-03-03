@@ -24,6 +24,7 @@ func (a application) LoadDependencyConfiguration() {
 	WireExpenseTypeService = wireExpenseTypeService
 	WireExpenseService = wireExpenseService
 	WireExpenseHandler = wireExpenseHandler
+	WireExpenseTypeHandler = wireExpenseTypeHandler
 	WireDbConnection = wireDbConnection
 	WireGenericFieldsValidator = wireGenericFieldsValidator
 	WireConfigurations = wireConfigurations

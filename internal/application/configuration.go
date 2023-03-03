@@ -5,6 +5,7 @@ import (
 	expenseService "finfit-backend/internal/domain/services/expense"
 	expenseTypeServ "finfit-backend/internal/domain/services/expensetype"
 	expense2 "finfit-backend/internal/infrastructure/interfaces/handler/rest/expense"
+	expensetype2 "finfit-backend/internal/infrastructure/interfaces/handler/rest/expensetype"
 	"finfit-backend/internal/infrastructure/repository/sql/expense"
 	"finfit-backend/internal/infrastructure/repository/sql/expensetype"
 	"finfit-backend/pkg/fieldvalidation"
@@ -22,6 +23,7 @@ var WireExpenseRepository func()
 var WireExpenseTypeService func()
 var WireExpenseService func()
 var WireExpenseHandler func()
+var WireExpenseTypeHandler func()
 var WireDbConnection func()
 var WireGenericFieldsValidator func()
 var WireConfigurations func()
@@ -74,6 +76,10 @@ func wireExpenseService() {
 
 func wireExpenseHandler() {
 	ExpenseHandler = expense2.NewHandler(ExpenseService, GenericFieldsValidator)
+}
+
+func wireExpenseTypeHandler() {
+	ExpenseTypeHandler = expensetype2.NewHandler(ExpenseTypeService, GenericFieldsValidator)
 }
 
 func wireDbConnection() {

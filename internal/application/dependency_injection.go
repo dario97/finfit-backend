@@ -5,12 +5,14 @@ import (
 	expenseService "finfit-backend/internal/domain/services/expense"
 	expenseTypeService "finfit-backend/internal/domain/services/expensetype"
 	"finfit-backend/internal/infrastructure/interfaces/handler/rest/expense"
+	"finfit-backend/internal/infrastructure/interfaces/handler/rest/expensetype"
 	"finfit-backend/pkg/fieldvalidation"
 	"gorm.io/gorm"
 )
 
 var (
 	ExpenseHandler         expense.Handler
+	ExpenseTypeHandler     expensetype.Handler
 	Database               *gorm.DB
 	GenericFieldsValidator fieldvalidation.FieldsValidator
 	ExpenseRepository      expenseService.Repository
@@ -42,4 +44,5 @@ func wireServices() {
 
 func wireHandlers() {
 	WireExpenseHandler()
+	WireExpenseTypeHandler()
 }

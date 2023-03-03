@@ -7,10 +7,12 @@ import (
 
 type Repository interface {
 	GetByID(id uuid.UUID) (*models.ExpenseType, error)
+	GetByName(name string) (*models.ExpenseType, error)
+	Add(expense *models.ExpenseType) (*models.ExpenseType, error)
 }
 type Service interface {
 	GetById(id uuid.UUID) (*models.ExpenseType, error)
-	Add(command AddCommand) (*models.ExpenseType, error)
+	Add(command *AddCommand) (*models.ExpenseType, error)
 }
 
 type service struct {
@@ -30,8 +32,28 @@ func (s service) GetById(id uuid.UUID) (*models.ExpenseType, error) {
 	return expenseType, nil
 }
 
-func (s service) Add(command AddCommand) (*models.ExpenseType, error) {
-	return nil, nil
+func (s service) Add(command *AddCommand) (*models.ExpenseType, error) {
+	storedExpenseType, err := s.repo.GetByName(command.name)
+
+	if err != nil {
+		return nil, UnexpectedError{Msg: err.Error()}
+	}
+
+	if storedExpenseType != nil {
+		return storedExpenseType, nil
+	}
+
+	expenseTypeToAdd := mapExpenseTypeFromAddCommand(command)
+	addedExpenseType, err := s.repo.Add(expenseTypeToAdd)
+	if err != nil {
+		return nil, UnexpectedError{Msg: err.Error()}
+	}
+
+	return addedExpenseType, nil
+}
+
+func mapExpenseTypeFromAddCommand(command *AddCommand) *models.ExpenseType {
+	return models.NewExpenseType(command.name)
 }
 
 type UnexpectedError struct {

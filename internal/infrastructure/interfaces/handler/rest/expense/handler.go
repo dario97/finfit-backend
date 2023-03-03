@@ -156,10 +156,10 @@ func (h handler) mapExpenseToExpenseBody(expense *models.Expense) expenseBody {
 }
 
 type addExpenseRequest struct {
-	Amount      float64          `json:"amount" validate:"required,gt=0"`
-	ExpenseDate string           `json:"expense_date" validate:"required,datetime=2006-01-02"`
-	Description string           `json:"description"`
-	ExpenseType *expenseTypeBody `json:"expense_type" validate:"required"`
+	Amount      float64          `json:"amount,omitempty" validate:"required,gt=0"`
+	ExpenseDate string           `json:"expense_date,omitempty" validate:"required,datetime=2006-01-02"`
+	Description string           `json:"description,omitempty"`
+	ExpenseType *expenseTypeBody `json:"expense_type,omitempty" validate:"required"`
 }
 
 type searchInPeriodQueryParams struct {
