@@ -1,10 +1,14 @@
 package expense
 
 import (
+	"errors"
 	"finfit-backend/internal/domain/models"
 	"finfit-backend/internal/infrastructure/repository/sql"
+	"gorm.io/gorm"
 	"time"
 )
+
+const dateFormat = "2006-01-02"
 
 type repository struct {
 	table string
@@ -27,8 +31,23 @@ func (r repository) Add(expense *models.Expense) (*models.Expense, error) {
 }
 
 func (r repository) SearchInPeriod(startDate time.Time, endDate time.Time) ([]*models.Expense, error) {
-	//TODO implement me
-	panic("implement me")
+	storedExpenses := []Expense{}
+	result := r.db.Table(r.table).Find(&storedExpenses, "expense_date >= ?  AND expense_date <= ?", startDate.Format(dateFormat), endDate.Format(dateFormat))
+
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+
+	if err := result.Error; err != nil {
+		return nil, err
+	}
+
+	expenses := []*models.Expense{}
+	for _, expense := range storedExpenses {
+		expenses = append(expenses, expense.MapToDomainExpense())
+	}
+
+	return expenses, nil
 }
 
 func (r repository) mapExpenseDBModelFromExpense(expenseToAdd *models.Expense) Expense {

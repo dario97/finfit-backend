@@ -1,7 +1,9 @@
 package expense
 
 import (
+	"finfit-backend/internal/domain/models"
 	"finfit-backend/internal/infrastructure/repository/sql/expensetype"
+	"github.com/google/uuid"
 	"time"
 )
 
@@ -14,4 +16,15 @@ type Expense struct {
 	Description   string
 	ExpenseTypeID string
 	ExpenseType   expensetype.ExpenseType
+}
+
+func (receiver Expense) MapToDomainExpense() *models.Expense {
+	id, _ := uuid.Parse(receiver.ID)
+	return &models.Expense{
+		Id:          id,
+		Amount:      receiver.Amount,
+		ExpenseDate: receiver.ExpenseDate,
+		Description: receiver.Description,
+		ExpenseType: receiver.ExpenseType.MapToDomainExpenseType(),
+	}
 }
