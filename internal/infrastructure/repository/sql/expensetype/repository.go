@@ -18,8 +18,8 @@ func NewRepository(db sql.Database, table string) *repository {
 }
 
 func (r repository) GetByID(id uuid.UUID) (*models.ExpenseType, error) {
-	var expenseType models.ExpenseType
-	result := r.db.Table(r.table).First(&ExpenseType{}, "id = ?", id.String())
+	var storedExpenseType ExpenseType
+	result := r.db.Table(r.table).First(&storedExpenseType, "id = ?", id.String())
 
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return nil, nil
@@ -29,13 +29,13 @@ func (r repository) GetByID(id uuid.UUID) (*models.ExpenseType, error) {
 		return nil, err
 	}
 
-	return &expenseType, nil
+	return r.mapExpenseTypeDbModelToExpenseType(storedExpenseType), nil
 }
 
 func (r repository) GetByName(name string) (*models.ExpenseType, error) {
-	var expenseType models.ExpenseType
-	result := r.db.Table(r.table).First(&ExpenseType{}, "name = ?", name)
-
+	var storedExpenseType ExpenseType
+	result := r.db.Table(r.table).First(&storedExpenseType, "name = ?", name)
+	result.Row()
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -44,7 +44,7 @@ func (r repository) GetByName(name string) (*models.ExpenseType, error) {
 		return nil, err
 	}
 
-	return &expenseType, nil
+	return r.mapExpenseTypeDbModelToExpenseType(storedExpenseType), nil
 }
 
 func (r repository) Add(expenseType *models.ExpenseType) (*models.ExpenseType, error) {
@@ -61,6 +61,14 @@ func (r repository) Add(expenseType *models.ExpenseType) (*models.ExpenseType, e
 func (r repository) mapExpenseTypeDBModelFromExpenseType(expenseType *models.ExpenseType) ExpenseType {
 	return ExpenseType{
 		ID:   expenseType.Id.String(),
+		Name: expenseType.Name,
+	}
+}
+
+func (r repository) mapExpenseTypeDbModelToExpenseType(expenseType ExpenseType) *models.ExpenseType {
+	id, _ := uuid.Parse(expenseType.ID)
+	return &models.ExpenseType{
+		Id:   id,
 		Name: expenseType.Name,
 	}
 }
