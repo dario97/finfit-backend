@@ -15,10 +15,6 @@ type Translation struct {
 	customTransFunc  validator.TranslationFunc
 }
 
-func NewTranslation(tag string, formattedMessage string, override bool, customRegisFunc validator.RegisterTranslationsFunc, customTransFunc validator.TranslationFunc) *Translation {
-	return &Translation{tag: tag, formattedMessage: formattedMessage, override: override, customRegisFunc: customRegisFunc, customTransFunc: customTransFunc}
-}
-
 func registerTranslations(validate *validator.Validate, translator ut.Translator, customTranslations []Translation) error {
 	_ = en2.RegisterDefaultTranslations(validate, translator)
 

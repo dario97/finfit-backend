@@ -11,10 +11,6 @@ type Validation struct {
 	function validator.Func
 }
 
-func NewValidation(tag string, function validator.Func) *Validation {
-	return &Validation{tag: tag, function: function}
-}
-
 const LteStrDateFieldValidationTag = "lteStrDateField"
 
 func LteStrDateField(fieldLevel validator.FieldLevel) bool {
