@@ -58,6 +58,7 @@ func (c *configurations) GetString(key string) string {
 	return c.configs[key]
 }
 
+// TODO: el nombre de las tablas tiene que venir por config
 func wireExpenseTypeRepository() {
 	ExpenseTypeRepository = expensetype.NewRepository(Database, "expense_type")
 }
@@ -82,6 +83,7 @@ func wireExpenseTypeHandler() {
 	ExpenseTypeHandler = expensetype2.NewHandler(ExpenseTypeService, GenericFieldsValidator)
 }
 
+// TODO: el nombre del schema tiene que venir por config
 func wireDbConnection() {
 	log.Info("starting database connection...")
 
@@ -99,7 +101,7 @@ func wireDbConnection() {
 
 	db, err := gorm.Open(postgres.New(postgres.Config{
 		Conn: sqlDB,
-	}), &gorm.Config{NamingStrategy: schema.NamingStrategy{TablePrefix: "public"}})
+	}), &gorm.Config{NamingStrategy: schema.NamingStrategy{TablePrefix: "public.", SingularTable: true}})
 
 	if err != nil {
 		log.Panic(err)

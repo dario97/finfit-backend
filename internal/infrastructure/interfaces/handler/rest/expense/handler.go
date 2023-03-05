@@ -62,6 +62,7 @@ func (h handler) Add(context echo.Context) error {
 	return context.JSON(http.StatusCreated, h.mapCreatedExpenseToExpenseResponse(createdExpense))
 }
 
+// TODO: Analizar limitar el largo del periodo y limite de expenses a buscar
 func (h handler) SearchInPeriod(context echo.Context) error {
 	requestParams := new(searchInPeriodQueryParams)
 
