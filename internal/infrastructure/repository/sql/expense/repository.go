@@ -33,7 +33,9 @@ func (r repository) Add(expense *models.Expense) (*models.Expense, error) {
 // TODO: no me gusta que el nombre de las tablas este atado a como lo resuelve GORM
 func (r repository) SearchInPeriod(startDate time.Time, endDate time.Time) ([]*models.Expense, error) {
 	storedExpenses := []Expense{}
-	result := r.db.Table(r.table).Joins("ExpenseType").Find(&storedExpenses, "expense_date >= ?  AND expense_date <= ?", startDate.Format(dateFormat), endDate.Format(dateFormat))
+	result := r.db.Table(r.table).
+		Joins("ExpenseType").
+		Find(&storedExpenses, "expense_date >= ?  AND expense_date <= ?", startDate.Format(dateFormat), endDate.Format(dateFormat))
 
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return nil, nil
