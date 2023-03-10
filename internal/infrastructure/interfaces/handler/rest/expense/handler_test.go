@@ -65,7 +65,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseToCreate_WhenAdd_ThenReturnStat
 	addCommand, _ := expenseService.NewAddCommand(expectedCreatedExpense.Amount,
 		expectedCreatedExpense.ExpenseDate,
 		expectedCreatedExpense.Description,
-		expectedCreatedExpense.ExpenseType)
+		expectedCreatedExpense.ExpenseType.Id)
 	suite.expenseServiceMock.MockAdd([]interface{}{addCommand},
 		[]interface{}{expectedCreatedExpense, nil}, 1)
 
@@ -89,7 +89,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseToCreateWithoutDescription_When
 	addCommand, _ := expenseService.NewAddCommand(expectedCreatedExpense.Amount,
 		expectedCreatedExpense.ExpenseDate,
 		expectedCreatedExpense.Description,
-		expectedCreatedExpense.ExpenseType)
+		expectedCreatedExpense.ExpenseType.Id)
 	suite.expenseServiceMock.MockAdd([]interface{}{addCommand},
 		[]interface{}{expectedCreatedExpense, nil}, 1)
 
@@ -112,7 +112,7 @@ func (suite *HandlerTestSuite) TestGivenAnInvalidExpenseType_WhenAdd_ThenReturnE
 	addCommand, _ := expenseService.NewAddCommand(expenseToCreate.Amount,
 		expenseToCreate.ExpenseDate,
 		expenseToCreate.Description,
-		expenseToCreate.ExpenseType)
+		expenseToCreate.ExpenseType.Id)
 
 	serviceErr := expenseService.InvalidExpenseTypeError{Msg: "the expense type doesn't exists"}
 	suite.expenseServiceMock.MockAdd([]interface{}{addCommand},
@@ -138,7 +138,7 @@ func (suite *HandlerTestSuite) TestGivenAnUnexpectedError_WhenAdd_ThenReturnErro
 	addCommand, _ := expenseService.NewAddCommand(expenseToCreate.Amount,
 		expenseToCreate.ExpenseDate,
 		expenseToCreate.Description,
-		expenseToCreate.ExpenseType)
+		expenseToCreate.ExpenseType.Id)
 	serviceErr := expenseService.UnexpectedError{Msg: "cagamo fuego"}
 	suite.expenseServiceMock.MockAdd([]interface{}{addCommand},
 		[]interface{}{nil, serviceErr}, 1)
@@ -195,11 +195,10 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutExpenseDate_WhenAdd_Then
 		time.Time{},
 		"Lomitos", models.NewExpenseType("Delivery"))
 
-	requestBody := fmt.Sprintf(`{"amount":%f,"description":"%s","expense_type":{"id":"%s","name":"%s"}}`,
+	requestBody := fmt.Sprintf(`{"amount":%f,"description":"%s","expense_type":{"id":"%s"}}`,
 		expenseToCreate.Amount,
 		expenseToCreate.Description,
-		expenseToCreate.ExpenseType.Id.String(),
-		expenseToCreate.ExpenseType.Name)
+		expenseToCreate.ExpenseType.Id.String())
 
 	c, rec := suite.mockAddExpenseRequest(requestBody)
 
@@ -221,12 +220,11 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithBadFormattedExpenseDate_Whe
 		time.Time{},
 		"Lomitos", models.NewExpenseType("Delivery"))
 
-	requestBody := fmt.Sprintf(`{"amount":%f,"expense_date":"%s","description":"%s","expense_type":{"id":"%s","name":"%s"}}`,
+	requestBody := fmt.Sprintf(`{"amount":%f,"expense_date":"%s","description":"%s","expense_type":{"id":"%s"}}`,
 		expenseToCreate.Amount,
 		"12-2013-12",
 		expenseToCreate.Description,
-		expenseToCreate.ExpenseType.Id.String(),
-		expenseToCreate.ExpenseType.Name)
+		expenseToCreate.ExpenseType.Id.String())
 
 	c, rec := suite.mockAddExpenseRequest(requestBody)
 
@@ -267,7 +265,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutExpenseType_WhenAdd_Then
 }
 
 func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutExpenseTypeID_WhenAdd_ThenReturnErrorWithBadRequestStatus() {
-	requestBody := `{"amount":100.2,"description":"Lomitos","expense_date":"2022-03-15","expense_type":{"name":"Delivery"}}`
+	requestBody := `{"amount":100.2,"description":"Lomitos","expense_date":"2022-03-15","expense_type":{}}`
 	c, rec := suite.mockAddExpenseRequest(requestBody)
 	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"ID\",\"message\":\"ID is a required field\"}]}\n"
 
@@ -280,37 +278,9 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutExpenseTypeID_WhenAdd_Th
 }
 
 func (suite *HandlerTestSuite) TestGivenAnExpenseWithNoUIIDExpenseTypeID_WhenAdd_ThenReturnErrorWithBadRequestStatus() {
-	requestBody := `{"amount":100.2,"description":"Lomitos","expense_date":"2022-03-15","expense_type":{"id":"fruta-uuid","name":"Delivery"}}`
+	requestBody := `{"amount":100.2,"description":"Lomitos","expense_date":"2022-03-15","expense_type":{"id":"fruta-uuid"}}`
 	c, rec := suite.mockAddExpenseRequest(requestBody)
 	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"ID\",\"message\":\"ID must be a valid UUID\"}]}\n"
-
-	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
-
-	handler.Add(c)
-
-	assert.Equal(suite.T(), http.StatusBadRequest, rec.Code)
-	assert.Equal(suite.T(), expectedResponseBody, rec.Body.String())
-}
-
-func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutExpenseTypeName_WhenAdd_ThenReturnErrorWithBadRequestStatus() {
-	id := pkg.NewUUID()
-	requestBody := fmt.Sprintf(`{"amount":100.2,"description":"Lomitos","expense_date":"2022-03-15","expense_type":{"id":"%s"}}`, id.String())
-	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"Name\",\"message\":\"Name is a required field\"}]}\n"
-	c, rec := suite.mockAddExpenseRequest(requestBody)
-
-	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
-
-	handler.Add(c)
-
-	assert.Equal(suite.T(), http.StatusBadRequest, rec.Code)
-	assert.Equal(suite.T(), expectedResponseBody, rec.Body.String())
-}
-
-func (suite *HandlerTestSuite) TestGivenAnExpenseWithEmptyExpenseTypeName_WhenAdd_ThenReturnErrorWithBadRequestStatus() {
-	id := pkg.NewUUID()
-	requestBody := fmt.Sprintf(`{"amount":100.2,"description":"Lomitos","expense_date":"2022-03-15","expense_type":{"id":"%s","name":""}}`, id.String())
-	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"Name\",\"message\":\"Name is a required field\"}]}\n"
-	c, rec := suite.mockAddExpenseRequest(requestBody)
 
 	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
 
@@ -471,9 +441,8 @@ func (suite *HandlerTestSuite) getAddExpenseRequestBodyFromExpense(expense *mode
 		Amount:      expense.Amount,
 		ExpenseDate: expense.ExpenseDate.Format(dateFormat),
 		Description: expense.Description,
-		ExpenseType: &expenseTypeBody{
-			ID:   expense.ExpenseType.Id.String(),
-			Name: expense.ExpenseType.Name,
+		ExpenseType: &addExpenseRequestExpenseTypeBody{
+			ID: expense.ExpenseType.Id.String(),
 		},
 	}
 

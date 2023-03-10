@@ -2,21 +2,21 @@ package expense
 
 import (
 	"errors"
-	"finfit-backend/internal/domain/models"
+	"github.com/google/uuid"
 	"strings"
 	"time"
 )
 
 type AddCommand struct {
-	amount      float64
-	expenseDate time.Time
-	description string
-	expenseType *models.ExpenseType
+	amount        float64
+	expenseDate   time.Time
+	description   string
+	expenseTypeId uuid.UUID
 }
 
-func NewAddCommand(amount float64, expenseDate time.Time, description string, expenseType *models.ExpenseType) (*AddCommand, error) {
-	if amount <= 0 || expenseDate.IsZero() || expenseType == nil {
+func NewAddCommand(amount float64, expenseDate time.Time, description string, expenseTypeId uuid.UUID) (*AddCommand, error) {
+	if amount <= 0 || expenseDate.IsZero() || expenseTypeId == uuid.Nil {
 		return nil, errors.New("invalid command")
 	}
-	return &AddCommand{amount: amount, expenseDate: expenseDate, description: strings.TrimSpace(description), expenseType: expenseType}, nil
+	return &AddCommand{amount: amount, expenseDate: expenseDate, description: strings.TrimSpace(description), expenseTypeId: expenseTypeId}, nil
 }

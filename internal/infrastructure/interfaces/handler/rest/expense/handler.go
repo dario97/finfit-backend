@@ -95,10 +95,7 @@ func (h handler) mapAddCommandFromRequestBody(body addExpenseRequest) (*expense.
 		return nil, err
 	}
 
-	return expense.NewAddCommand(body.Amount, date, body.Description, &models.ExpenseType{
-		Id:   expenseTypeId,
-		Name: body.ExpenseType.Name,
-	})
+	return expense.NewAddCommand(body.Amount, date, body.Description, expenseTypeId)
 }
 
 func (h handler) mapSearchCommandFromRequestBody(params searchInPeriodQueryParams) (*expense.SearchInPeriodCommand, error) {
@@ -157,10 +154,14 @@ func (h handler) mapExpenseToExpenseBody(expense *models.Expense) expenseBody {
 }
 
 type addExpenseRequest struct {
-	Amount      float64          `json:"amount,omitempty" validate:"required,gt=0"`
-	ExpenseDate string           `json:"expense_date,omitempty" validate:"required,datetime=2006-01-02"`
-	Description string           `json:"description,omitempty"`
-	ExpenseType *expenseTypeBody `json:"expense_type,omitempty" validate:"required"`
+	Amount      float64                           `json:"amount,omitempty" validate:"required,gt=0"`
+	ExpenseDate string                            `json:"expense_date,omitempty" validate:"required,datetime=2006-01-02"`
+	Description string                            `json:"description,omitempty"`
+	ExpenseType *addExpenseRequestExpenseTypeBody `json:"expense_type,omitempty" validate:"required"`
+}
+
+type addExpenseRequestExpenseTypeBody struct {
+	ID string `json:"id" validate:"required,uuid"`
 }
 
 type searchInPeriodQueryParams struct {
@@ -168,9 +169,12 @@ type searchInPeriodQueryParams struct {
 	EndDate   string `query:"end_date" validate:"required,datetime=2006-01-02"`
 }
 
-type expenseTypeBody struct {
-	ID   string `json:"id" validate:"required,uuid"`
-	Name string `json:"name" validate:"required"`
+type expenseResponse struct {
+	Expense expenseBody `json:"expense"`
+}
+
+type searchResponse struct {
+	Expenses []expenseBody `json:"expenses"`
 }
 
 type expenseBody struct {
@@ -181,10 +185,7 @@ type expenseBody struct {
 	ExpenseType expenseTypeBody `json:"expense_type"`
 }
 
-type expenseResponse struct {
-	Expense expenseBody `json:"expense"`
-}
-
-type searchResponse struct {
-	Expenses []expenseBody `json:"expenses"`
+type expenseTypeBody struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }

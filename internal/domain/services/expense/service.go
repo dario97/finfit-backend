@@ -28,7 +28,7 @@ func NewService(expenseRepository Repository, expenseTypeService expensetype.Ser
 }
 
 func (s service) Add(command *AddCommand) (*models.Expense, error) {
-	expenseType, expenseTypeServiceError := s.expenseTypeService.GetById(command.expenseType.Id)
+	expenseType, expenseTypeServiceError := s.expenseTypeService.GetById(command.expenseTypeId)
 
 	if expenseTypeServiceError != nil {
 		return nil, UnexpectedError{Msg: expenseTypeServiceError.Error()}
@@ -38,7 +38,7 @@ func (s service) Add(command *AddCommand) (*models.Expense, error) {
 		return nil, InvalidExpenseTypeError{Msg: invalidExpenseTypeErrorMsg}
 	}
 
-	expenseToCreate := models.NewExpense(command.amount, command.expenseDate, command.description, command.expenseType)
+	expenseToCreate := models.NewExpense(command.amount, command.expenseDate, command.description, expenseType)
 
 	createdExpense, repoError := s.repository.Add(expenseToCreate)
 

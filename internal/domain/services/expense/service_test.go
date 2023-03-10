@@ -189,9 +189,9 @@ func assertEqualsExpense(t *testing.T, expected *models.Expense, actual *models.
 
 func buildAddCommandFromExpense(expense *models.Expense) *AddCommand {
 	return &AddCommand{
-		amount:      expense.Amount,
-		expenseDate: expense.ExpenseDate,
-		description: expense.Description,
-		expenseType: expense.ExpenseType,
+		amount:        expense.Amount,
+		expenseDate:   expense.ExpenseDate,
+		description:   expense.Description,
+		expenseTypeId: expense.ExpenseType.Id,
 	}
 }
