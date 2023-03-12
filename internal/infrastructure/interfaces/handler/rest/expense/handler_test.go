@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"finfit-backend/internal/domain/models"
 	expenseService "finfit-backend/internal/domain/services/expense"
+	"finfit-backend/internal/infrastructure/interfaces/handler/rest"
 	"finfit-backend/pkg"
 	"finfit-backend/pkg/fieldvalidation"
 	"fmt"
@@ -19,7 +20,7 @@ import (
 )
 
 const (
-	errorResponse = `{"status_code":%d,"msg":"%s","error_detail":%v}
+	errorResponse = `{"status_code":%d,"msg":"%s","error_detail":"%v","field_errors":%v,"error_code":%d}
 `
 )
 
@@ -122,7 +123,7 @@ func (suite *HandlerTestSuite) TestGivenAnInvalidExpenseType_WhenAdd_ThenReturnE
 
 	handler.Add(c)
 
-	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, serviceErr.Error(), fmt.Sprintf(`"%s"`, serviceErr.Error()))
+	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, serviceErr.Error(), serviceErr.Error(), "[]", 0)
 	assert.Equal(suite.T(), http.StatusBadRequest, rec.Code)
 	assert.Equal(suite.T(), expectedResponseBody, rec.Body.String())
 }
@@ -147,7 +148,7 @@ func (suite *HandlerTestSuite) TestGivenAnUnexpectedError_WhenAdd_ThenReturnErro
 
 	handler.Add(c)
 
-	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusInternalServerError, unexpectedErrorMessage, fmt.Sprintf(`"%s"`, serviceErr.Error()))
+	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusInternalServerError, unexpectedErrorMessage, serviceErr.Error(), "[]", 0)
 	assert.Equal(suite.T(), http.StatusInternalServerError, rec.Code)
 	assert.Equal(suite.T(), expectedResponseBody, rec.Body.String())
 }
@@ -160,7 +161,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutAmount_WhenAdd_ThenRetur
 	requestBody := suite.getAddExpenseRequestBodyFromExpense(expenseToCreate)
 	c, rec := suite.mockAddExpenseRequest(requestBody)
 
-	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, `[{"field":"Amount","message":"Amount is a required field"}]`)
+	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, fieldValidationErrorMessage, `[{"field":"Amount","message":"Amount is a required field"}]`, rest.FieldValidationErrorCode)
 
 	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
 
@@ -180,7 +181,9 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithAmountLowerThanZero_WhenAdd
 	expectedResponseBody := fmt.Sprintf(errorResponse,
 		http.StatusBadRequest,
 		fieldValidationErrorMessage,
-		`[{"field":"Amount","message":"Amount must be greater than 0"}]`)
+		fieldValidationErrorMessage,
+		`[{"field":"Amount","message":"Amount must be greater than 0"}]`,
+		rest.FieldValidationErrorCode)
 
 	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
 
@@ -205,7 +208,9 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutExpenseDate_WhenAdd_Then
 	expectedResponseBody := fmt.Sprintf(errorResponse,
 		http.StatusBadRequest,
 		fieldValidationErrorMessage,
-		`[{"field":"ExpenseDate","message":"ExpenseDate is a required field"}]`)
+		fieldValidationErrorMessage,
+		`[{"field":"ExpenseDate","message":"ExpenseDate is a required field"}]`,
+		rest.FieldValidationErrorCode)
 
 	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
 
@@ -231,7 +236,9 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithBadFormattedExpenseDate_Whe
 	expectedResponseBody := fmt.Sprintf(errorResponse,
 		http.StatusBadRequest,
 		fieldValidationErrorMessage,
-		`[{"field":"ExpenseDate","message":"ExpenseDate does not match the 2006-01-02 format"}]`)
+		fieldValidationErrorMessage,
+		`[{"field":"ExpenseDate","message":"ExpenseDate does not match the 2006-01-02 format"}]`,
+		rest.FieldValidationErrorCode)
 
 	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
 
@@ -254,7 +261,9 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutExpenseType_WhenAdd_Then
 	expectedResponseBody := fmt.Sprintf(errorResponse,
 		http.StatusBadRequest,
 		fieldValidationErrorMessage,
-		`[{"field":"ExpenseType","message":"ExpenseType is a required field"}]`)
+		fieldValidationErrorMessage,
+		`[{"field":"ExpenseType","message":"ExpenseType is a required field"}]`,
+		rest.FieldValidationErrorCode)
 
 	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
 
@@ -267,7 +276,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutExpenseType_WhenAdd_Then
 func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutExpenseTypeID_WhenAdd_ThenReturnErrorWithBadRequestStatus() {
 	requestBody := `{"amount":100.2,"description":"Lomitos","expense_date":"2022-03-15","expense_type":{}}`
 	c, rec := suite.mockAddExpenseRequest(requestBody)
-	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"ID\",\"message\":\"ID is a required field\"}]}\n"
+	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":\"some fields are invalid\",\"field_errors\":[{\"field\":\"ID\",\"message\":\"ID is a required field\"}],\"error_code\":1}\n"
 
 	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
 
@@ -280,7 +289,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutExpenseTypeID_WhenAdd_Th
 func (suite *HandlerTestSuite) TestGivenAnExpenseWithNoUIIDExpenseTypeID_WhenAdd_ThenReturnErrorWithBadRequestStatus() {
 	requestBody := `{"amount":100.2,"description":"Lomitos","expense_date":"2022-03-15","expense_type":{"id":"fruta-uuid"}}`
 	c, rec := suite.mockAddExpenseRequest(requestBody)
-	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":[{\"field\":\"ID\",\"message\":\"ID must be a valid UUID\"}]}\n"
+	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":\"some fields are invalid\",\"field_errors\":[{\"field\":\"ID\",\"message\":\"ID must be a valid UUID\"}],\"error_code\":1}\n"
 
 	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
 
@@ -318,7 +327,7 @@ func (suite *HandlerTestSuite) TestGivenThatServiceFails_WhenSearchInPeriod_Then
 
 	c, rec := suite.mockSearchInPeriodRequest(fmt.Sprintf("start_date=%s&end_date=%s", startDate.Format(dateFormat), endDate.Format(dateFormat)))
 
-	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusInternalServerError, unexpectedErrorMessage, fmt.Sprintf(`"%s"`, expectedServiceError.Error()))
+	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusInternalServerError, unexpectedErrorMessage, expectedServiceError.Error(), "[]", 0)
 
 	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
 
@@ -333,7 +342,7 @@ func (suite *HandlerTestSuite) TestGivenThatStartDateParamNotExists_WhenSearchIn
 
 	c, rec := suite.mockSearchInPeriodRequest(fmt.Sprintf("end_date=%s", endDate.Format(dateFormat)))
 
-	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, "[{\"field\":\"StartDate\",\"message\":\"StartDate is a required field\"}]")
+	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, fieldValidationErrorMessage, "[{\"field\":\"StartDate\",\"message\":\"StartDate is a required field\"}]", rest.FieldValidationErrorCode)
 
 	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
 
@@ -348,7 +357,7 @@ func (suite *HandlerTestSuite) TestGivenThatEndDateParamNotExists_WhenSearchInPe
 
 	c, rec := suite.mockSearchInPeriodRequest(fmt.Sprintf("start_date=%s", startDate.Format(dateFormat)))
 
-	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, "[{\"field\":\"StartDate\",\"message\":\"StartDate must be before or equal to EndDate\"},{\"field\":\"EndDate\",\"message\":\"EndDate is a required field\"}]")
+	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, fieldValidationErrorMessage, "[{\"field\":\"StartDate\",\"message\":\"StartDate must be before or equal to EndDate\"},{\"field\":\"EndDate\",\"message\":\"EndDate is a required field\"}]", rest.FieldValidationErrorCode)
 
 	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
 
@@ -364,7 +373,7 @@ func (suite *HandlerTestSuite) TestGivenThatStartDateParamHasBadFormat_WhenSearc
 
 	c, rec := suite.mockSearchInPeriodRequest(fmt.Sprintf("start_date=%s&end_date=%s", startDate.Format("02-01-2006"), endDate.Format(dateFormat)))
 
-	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, "[{\"field\":\"StartDate\",\"message\":\"StartDate does not match the 2006-01-02 format\"}]")
+	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, fieldValidationErrorMessage, "[{\"field\":\"StartDate\",\"message\":\"StartDate does not match the 2006-01-02 format\"}]", rest.FieldValidationErrorCode)
 
 	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
 
@@ -380,7 +389,7 @@ func (suite *HandlerTestSuite) TestGivenThatEndDateParamHasBadFormat_WhenSearchI
 
 	c, rec := suite.mockSearchInPeriodRequest(fmt.Sprintf("start_date=%s&end_date=%s", startDate.Format(dateFormat), endDate.Format("02-01-2006")))
 
-	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, "[{\"field\":\"StartDate\",\"message\":\"StartDate must be before or equal to EndDate\"},{\"field\":\"EndDate\",\"message\":\"EndDate does not match the 2006-01-02 format\"}]")
+	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, fieldValidationErrorMessage, "[{\"field\":\"StartDate\",\"message\":\"StartDate must be before or equal to EndDate\"},{\"field\":\"EndDate\",\"message\":\"EndDate does not match the 2006-01-02 format\"}]", rest.FieldValidationErrorCode)
 
 	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
 
@@ -396,7 +405,7 @@ func (suite *HandlerTestSuite) TestGivenThatStartDateIsGreaterThanEndDate_WhenSe
 
 	c, rec := suite.mockSearchInPeriodRequest(fmt.Sprintf("start_date=%s&end_date=%s", startDate.Format(dateFormat), endDate.Format(dateFormat)))
 
-	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, "[{\"field\":\"StartDate\",\"message\":\"StartDate must be before or equal to EndDate\"}]")
+	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, fieldValidationErrorMessage, "[{\"field\":\"StartDate\",\"message\":\"StartDate must be before or equal to EndDate\"}]", rest.FieldValidationErrorCode)
 
 	handler := NewHandler(suite.expenseServiceMock, suite.getValidator())
 

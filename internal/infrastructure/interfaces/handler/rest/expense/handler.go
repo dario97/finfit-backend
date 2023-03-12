@@ -42,16 +42,16 @@ func (h handler) Add(context echo.Context) error {
 	requestBody := new(addExpenseRequest)
 
 	if err := context.Bind(requestBody); err != nil {
-		return h.buildErrorResponse(context, http.StatusBadRequest, bodyIsInvalidErrorMessage, err.Error())
+		return h.buildErrorResponse(context, http.StatusBadRequest, bodyIsInvalidErrorMessage, err.Error(), []fieldvalidation.FieldError{}, 0)
 	}
 
 	if fieldValidationErrors := h.fieldsValidator.ValidateFields(requestBody); len(fieldValidationErrors) > 0 {
-		return h.buildErrorResponse(context, http.StatusBadRequest, fieldValidationErrorMessage, fieldValidationErrors)
+		return h.buildErrorResponse(context, http.StatusBadRequest, fieldValidationErrorMessage, fieldValidationErrorMessage, fieldValidationErrors, rest.FieldValidationErrorCode)
 	}
 
 	command, err := h.mapAddCommandFromRequestBody(*requestBody)
 	if err != nil {
-		return h.buildErrorResponse(context, http.StatusBadRequest, fieldValidationErrorMessage, err.Error())
+		return h.buildErrorResponse(context, http.StatusBadRequest, fieldValidationErrorMessage, err.Error(), []fieldvalidation.FieldError{}, 0)
 	}
 
 	createdExpense, err := h.service.Add(command)
@@ -67,16 +67,16 @@ func (h handler) SearchInPeriod(context echo.Context) error {
 	requestParams := new(searchInPeriodQueryParams)
 
 	if err := context.Bind(requestParams); err != nil {
-		return h.buildErrorResponse(context, http.StatusBadRequest, paramsAreInvalidErrorMessage, err.Error())
+		return h.buildErrorResponse(context, http.StatusBadRequest, paramsAreInvalidErrorMessage, err.Error(), []fieldvalidation.FieldError{}, 0)
 	}
 
 	if fieldValidationErrors := h.fieldsValidator.ValidateFields(requestParams); len(fieldValidationErrors) > 0 {
-		return h.buildErrorResponse(context, http.StatusBadRequest, fieldValidationErrorMessage, fieldValidationErrors)
+		return h.buildErrorResponse(context, http.StatusBadRequest, fieldValidationErrorMessage, fieldValidationErrorMessage, fieldValidationErrors, rest.FieldValidationErrorCode)
 	}
 
 	command, err := h.mapSearchCommandFromRequestBody(*requestParams)
 	if err != nil {
-		return h.buildErrorResponse(context, http.StatusBadRequest, fieldValidationErrorMessage, err.Error())
+		return h.buildErrorResponse(context, http.StatusBadRequest, fieldValidationErrorMessage, err.Error(), []fieldvalidation.FieldError{}, 0)
 	}
 
 	expenses, err := h.service.SearchInPeriod(command)
@@ -118,17 +118,17 @@ func (h handler) mapCreatedExpenseToExpenseResponse(expense *models.Expense) exp
 	}}
 }
 
-func (h handler) buildErrorResponse(ctx echo.Context, statusCode int, errorMessage string, errorDetail interface{}) error {
-	errorResponse := rest.ErrorResponse{StatusCode: statusCode, Msg: errorMessage, ErrorDetail: errorDetail}
-	return ctx.JSON(statusCode, errorResponse)
-}
-
 func (h handler) manageServiceError(ctx echo.Context, err error) error {
 	if errors.As(err, &expense.InvalidExpenseTypeError{}) {
-		return h.buildErrorResponse(ctx, http.StatusBadRequest, err.Error(), err.Error())
+		return h.buildErrorResponse(ctx, http.StatusBadRequest, err.Error(), err.Error(), []fieldvalidation.FieldError{}, 0)
 	} else {
-		return h.buildErrorResponse(ctx, http.StatusInternalServerError, unexpectedErrorMessage, err.Error())
+		return h.buildErrorResponse(ctx, http.StatusInternalServerError, unexpectedErrorMessage, err.Error(), []fieldvalidation.FieldError{}, 0)
 	}
+}
+
+func (h handler) buildErrorResponse(ctx echo.Context, statusCode int, errorMessage string, errorDetail string, fieldErrors []fieldvalidation.FieldError, errorCode uint) error {
+	errorResponse := rest.ErrorResponse{StatusCode: statusCode, Msg: errorMessage, ErrorDetail: errorDetail, FieldErrors: fieldErrors, ErrorCode: errorCode}
+	return ctx.JSON(statusCode, errorResponse)
 }
 
 func (h handler) mapExpensesToSearchResponse(expenses []*models.Expense) searchResponse {

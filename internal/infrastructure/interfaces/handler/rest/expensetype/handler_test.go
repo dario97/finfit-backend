@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"finfit-backend/internal/domain/models"
 	expenseTypeService "finfit-backend/internal/domain/services/expensetype"
+	"finfit-backend/internal/infrastructure/interfaces/handler/rest"
 	"finfit-backend/pkg"
 	"finfit-backend/pkg/fieldvalidation"
 	"fmt"
@@ -18,7 +19,7 @@ import (
 )
 
 const (
-	errorResponse = `{"status_code":%d,"msg":"%s","error_detail":%v}
+	errorResponse = `{"status_code":%d,"msg":"%s","error_detail":"%v","field_errors":%v,"error_code":%d}
 `
 )
 
@@ -77,7 +78,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseTypeToAddWithEmptyName_WhenAdd_
 	requestBody := suite.getAddExpenseRequestBodyFromExpense(expectedAddedExpenseType)
 	c, rec := suite.mockAddExpenseTypeRequest(requestBody)
 
-	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, "[{\"field\":\"Name\",\"message\":\"Name is a required field\"}]")
+	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, fieldValidationErrorMessage, "[{\"field\":\"Name\",\"message\":\"Name is a required field\"}]", rest.FieldValidationErrorCode)
 
 	handler := NewHandler(suite.expenseTypeServiceMock, suite.getValidator())
 
@@ -93,7 +94,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseTypeToAddWithBlankName_WhenAdd_
 	requestBody := suite.getAddExpenseRequestBodyFromExpense(expectedAddedExpenseType)
 	c, rec := suite.mockAddExpenseTypeRequest(requestBody)
 
-	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, "[{\"field\":\"Name\",\"message\":\"Name is a required field\"}]")
+	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, fieldValidationErrorMessage, "[{\"field\":\"Name\",\"message\":\"Name is a required field\"}]", rest.FieldValidationErrorCode)
 
 	handler := NewHandler(suite.expenseTypeServiceMock, suite.getValidator())
 
@@ -109,7 +110,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseTypeToAddWithTooSmallName_WhenA
 	requestBody := suite.getAddExpenseRequestBodyFromExpense(expectedAddedExpenseType)
 	c, rec := suite.mockAddExpenseTypeRequest(requestBody)
 
-	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, "[{\"field\":\"Name\",\"message\":\"Name must be at least 3 characters in length\"}]")
+	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, fieldValidationErrorMessage, "[{\"field\":\"Name\",\"message\":\"Name must be at least 3 characters in length\"}]", rest.FieldValidationErrorCode)
 
 	handler := NewHandler(suite.expenseTypeServiceMock, suite.getValidator())
 
@@ -125,7 +126,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseTypeToAddWithTooLongName_WhenAd
 	requestBody := suite.getAddExpenseRequestBodyFromExpense(expectedAddedExpenseType)
 	c, rec := suite.mockAddExpenseTypeRequest(requestBody)
 
-	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, "[{\"field\":\"Name\",\"message\":\"Name must be a maximum of 32 characters in length\"}]")
+	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, fieldValidationErrorMessage, "[{\"field\":\"Name\",\"message\":\"Name must be a maximum of 32 characters in length\"}]", rest.FieldValidationErrorCode)
 
 	handler := NewHandler(suite.expenseTypeServiceMock, suite.getValidator())
 
