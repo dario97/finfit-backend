@@ -17,6 +17,7 @@ const (
 
 type Handler interface {
 	Add(context echo.Context) error
+	GetAll(context echo.Context) error
 }
 
 type handler struct {
@@ -52,6 +53,15 @@ func (h handler) Add(context echo.Context) error {
 	return context.JSON(http.StatusCreated, h.mapAddedExpenseTypeToExpenseTypeResponse(addedExpenseType))
 }
 
+func (h handler) GetAll(context echo.Context) error {
+	expenseTypes, err := h.service.GetAll()
+	if err != nil {
+		return h.buildErrorResponse(context, http.StatusInternalServerError, unexpectedErrorMessage, err.Error(), []fieldvalidation.FieldError{}, 0)
+	}
+
+	return context.JSON(http.StatusOK, h.mapExpenseTypesToGetAllResponse(expenseTypes))
+}
+
 func (h handler) mapAddCommandFromRequestBody(body addExpenseTypeRequest) (*expensetype.AddCommand, error) {
 	return expensetype.NewAddCommand(body.Name)
 }
@@ -63,6 +73,21 @@ func (h handler) buildErrorResponse(ctx echo.Context, statusCode int, errorMessa
 
 func (h handler) mapAddedExpenseTypeToExpenseTypeResponse(expenseType *models.ExpenseType) addExpenseTypeResponse {
 	return addExpenseTypeResponse{
+		ExpenseType: h.mapExpenseTypeToExpenseTypeBody(expenseType),
+	}
+}
+
+func (h handler) mapExpenseTypesToGetAllResponse(expenseTypes []*models.ExpenseType) getAllResponse {
+	expenseTypeBodies := []expenseTypeBody{}
+	for _, expenseType := range expenseTypes {
+		expenseTypeBodies = append(expenseTypeBodies, h.mapExpenseTypeToExpenseTypeBody(expenseType))
+	}
+
+	return getAllResponse{ExpenseTypes: expenseTypeBodies}
+}
+
+func (h handler) mapExpenseTypeToExpenseTypeBody(expenseType *models.ExpenseType) expenseTypeBody {
+	return expenseTypeBody{
 		ID:   expenseType.Id.String(),
 		Name: expenseType.Name,
 	}
@@ -73,6 +98,14 @@ type addExpenseTypeRequest struct {
 }
 
 type addExpenseTypeResponse struct {
+	ExpenseType expenseTypeBody `json:"expense_type"`
+}
+
+type getAllResponse struct {
+	ExpenseTypes []expenseTypeBody `json:"expense_types"`
+}
+
+type expenseTypeBody struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }

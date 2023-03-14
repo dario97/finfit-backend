@@ -5,6 +5,7 @@ import (
 	"finfit-backend/internal/domain/models"
 	"finfit-backend/pkg"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"testing"
@@ -103,6 +104,30 @@ func (suite *ServiceTestSuite) TestGivenThatRepositoryFailsAddingExpenseType_whe
 
 	require.ErrorAs(suite.T(), err, &UnexpectedError{})
 	suite.repositoryMock.AssertExpectations(suite.T())
+}
+
+func (suite *ServiceTestSuite) TestGetAll_Success() {
+	expectedExpenseTypes := []*models.ExpenseType{{Id: uuid.New(), Name: "Food"}, {Id: uuid.New(), Name: "Travel"}}
+	suite.repositoryMock.MockGetAll([]interface{}{}, []interface{}{expectedExpenseTypes, nil}, 1)
+
+	actualExpenseTypes, err := suite.service.GetAll()
+
+	assert.Nil(suite.T(), err)
+	assert.Len(suite.T(), actualExpenseTypes, 2)
+	assert.Equal(suite.T(), actualExpenseTypes[0].Id, expectedExpenseTypes[0].Id)
+	assert.Equal(suite.T(), actualExpenseTypes[0].Name, expectedExpenseTypes[0].Name)
+	assert.Equal(suite.T(), actualExpenseTypes[1].Id, expectedExpenseTypes[1].Id)
+	assert.Equal(suite.T(), actualExpenseTypes[1].Name, expectedExpenseTypes[1].Name)
+}
+
+func (suite *ServiceTestSuite) TestGivenThatRepositoryFails_whenGetAll_thenReturnError() {
+	suite.repositoryMock.MockGetAll([]interface{}{}, []interface{}{nil, errors.New("fail")}, 1)
+
+	expenseTypes, err := suite.service.GetAll()
+
+	assert.NotNil(suite.T(), err)
+	assert.ErrorAs(suite.T(), err, &UnexpectedError{})
+	assert.Nil(suite.T(), expenseTypes)
 }
 
 func (suite *ServiceTestSuite) assertEqualsExpenseType(expected *models.ExpenseType, actual *models.ExpenseType) {

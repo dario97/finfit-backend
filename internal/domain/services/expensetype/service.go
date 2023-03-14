@@ -8,11 +8,13 @@ import (
 type Repository interface {
 	GetByID(id uuid.UUID) (*models.ExpenseType, error)
 	GetByName(name string) (*models.ExpenseType, error)
+	GetAll() ([]*models.ExpenseType, error)
 	Add(expense *models.ExpenseType) (*models.ExpenseType, error)
 }
 type Service interface {
 	GetById(id uuid.UUID) (*models.ExpenseType, error)
 	Add(command *AddCommand) (*models.ExpenseType, error)
+	GetAll() ([]*models.ExpenseType, error)
 }
 
 type service struct {
@@ -50,6 +52,15 @@ func (s service) Add(command *AddCommand) (*models.ExpenseType, error) {
 	}
 
 	return addedExpenseType, nil
+}
+
+func (s service) GetAll() ([]*models.ExpenseType, error) {
+	expenseTypes, err := s.repo.GetAll()
+	if err != nil {
+		return nil, UnexpectedError{Msg: err.Error()}
+	}
+
+	return expenseTypes, nil
 }
 
 func mapExpenseTypeFromAddCommand(command *AddCommand) *models.ExpenseType {

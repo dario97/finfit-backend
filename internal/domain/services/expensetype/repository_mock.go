@@ -42,6 +42,20 @@ func (r *RepositoryMock) GetByName(name string) (*models.ExpenseType, error) {
 	}
 }
 
+func (r *RepositoryMock) GetAll() ([]*models.ExpenseType, error) {
+	args := r.Called()
+
+	err := args.Error(1)
+	expenseType := args.Get(0)
+	if err == nil && expenseType == nil {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	} else {
+		return args.Get(0).([]*models.ExpenseType), nil
+	}
+}
+
 func (r *RepositoryMock) Add(expenseType *models.ExpenseType) (*models.ExpenseType, error) {
 	args := r.Called(expenseType)
 
@@ -66,4 +80,8 @@ func (r *RepositoryMock) MockGetByName(callArguments, returnArguments []interfac
 
 func (r *RepositoryMock) MockAdd(callArguments, returnArguments []interface{}, times int) {
 	r.On("Add", callArguments...).Return(returnArguments...).Times(times)
+}
+
+func (r *RepositoryMock) MockGetAll(callArguments, returnArguments []interface{}, times int) {
+	r.On("GetAll", callArguments...).Return(returnArguments...).Times(times)
 }

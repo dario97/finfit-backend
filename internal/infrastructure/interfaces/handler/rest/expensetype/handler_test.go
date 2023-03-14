@@ -3,6 +3,7 @@ package expensetype
 import (
 	"encoding/json"
 	"finfit-backend/internal/domain/models"
+	"finfit-backend/internal/domain/services/expense"
 	expenseTypeService "finfit-backend/internal/domain/services/expensetype"
 	"finfit-backend/internal/infrastructure/interfaces/handler/rest"
 	"finfit-backend/pkg"
@@ -55,10 +56,10 @@ func TestHandlerTestSuite(t *testing.T) {
 func (suite *HandlerTestSuite) TestGivenAnExpenseTypeToAdd_WhenAdd_ThenReturnStatusOkWithCreatedExpenseType() {
 	expectedAddedExpenseType := models.NewExpenseType("Servicios")
 
-	requestBody := suite.getAddExpenseRequestBodyFromExpense(expectedAddedExpenseType)
+	requestBody := suite.getAddExpenseRequestBodyFromExpenseType(expectedAddedExpenseType)
 	c, rec := suite.mockAddExpenseTypeRequest(requestBody)
 
-	expectedResponseBody := suite.getAddExpenseTypeResponseFromExpense(expectedAddedExpenseType)
+	expectedResponseBody := suite.getAddExpenseTypeResponseFromExpenseType(expectedAddedExpenseType)
 
 	addCommand, _ := expenseTypeService.NewAddCommand(expectedAddedExpenseType.Name)
 	suite.expenseTypeServiceMock.MockAdd([]interface{}{addCommand},
@@ -75,7 +76,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseTypeToAdd_WhenAdd_ThenReturnSta
 func (suite *HandlerTestSuite) TestGivenAnExpenseTypeToAddWithEmptyName_WhenAdd_ThenReturnStatusBadRequest() {
 	expectedAddedExpenseType := models.NewExpenseType("")
 
-	requestBody := suite.getAddExpenseRequestBodyFromExpense(expectedAddedExpenseType)
+	requestBody := suite.getAddExpenseRequestBodyFromExpenseType(expectedAddedExpenseType)
 	c, rec := suite.mockAddExpenseTypeRequest(requestBody)
 
 	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, fieldValidationErrorMessage, "[{\"field\":\"Name\",\"message\":\"Name is a required field\"}]", rest.FieldValidationErrorCode)
@@ -91,7 +92,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseTypeToAddWithEmptyName_WhenAdd_
 func (suite *HandlerTestSuite) TestGivenAnExpenseTypeToAddWithBlankName_WhenAdd_ThenReturnStatusBadRequest() {
 	expectedAddedExpenseType := models.NewExpenseType("   ")
 
-	requestBody := suite.getAddExpenseRequestBodyFromExpense(expectedAddedExpenseType)
+	requestBody := suite.getAddExpenseRequestBodyFromExpenseType(expectedAddedExpenseType)
 	c, rec := suite.mockAddExpenseTypeRequest(requestBody)
 
 	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, fieldValidationErrorMessage, "[{\"field\":\"Name\",\"message\":\"Name is a required field\"}]", rest.FieldValidationErrorCode)
@@ -107,7 +108,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseTypeToAddWithBlankName_WhenAdd_
 func (suite *HandlerTestSuite) TestGivenAnExpenseTypeToAddWithTooSmallName_WhenAdd_ThenReturnStatusBadRequest() {
 	expectedAddedExpenseType := models.NewExpenseType("PR")
 
-	requestBody := suite.getAddExpenseRequestBodyFromExpense(expectedAddedExpenseType)
+	requestBody := suite.getAddExpenseRequestBodyFromExpenseType(expectedAddedExpenseType)
 	c, rec := suite.mockAddExpenseTypeRequest(requestBody)
 
 	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, fieldValidationErrorMessage, "[{\"field\":\"Name\",\"message\":\"Name must be at least 3 characters in length\"}]", rest.FieldValidationErrorCode)
@@ -123,7 +124,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseTypeToAddWithTooSmallName_WhenA
 func (suite *HandlerTestSuite) TestGivenAnExpenseTypeToAddWithTooLongName_WhenAdd_ThenReturnStatusBadRequest() {
 	expectedAddedExpenseType := models.NewExpenseType("THIS IS A VERY LONG NAME FOR EXPENSE TYPE")
 
-	requestBody := suite.getAddExpenseRequestBodyFromExpense(expectedAddedExpenseType)
+	requestBody := suite.getAddExpenseRequestBodyFromExpenseType(expectedAddedExpenseType)
 	c, rec := suite.mockAddExpenseTypeRequest(requestBody)
 
 	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, fieldValidationErrorMessage, fieldValidationErrorMessage, "[{\"field\":\"Name\",\"message\":\"Name must be a maximum of 32 characters in length\"}]", rest.FieldValidationErrorCode)
@@ -136,6 +137,45 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseTypeToAddWithTooLongName_WhenAd
 	}
 }
 
+func (suite *HandlerTestSuite) TestGetAllSuccess() {
+	expectedExpenseTypes := []*models.ExpenseType{
+		{
+			Id:   uuid.New(),
+			Name: "test1",
+		},
+		{
+			Id:   uuid.New(),
+			Name: "test2",
+		},
+	}
+
+	expectedResponseBody := suite.getGetAllExpenseTypeResponseFromExpenseTypes(expectedExpenseTypes)
+	suite.expenseTypeServiceMock.MockGetAll([]interface{}{}, []interface{}{expectedExpenseTypes, nil}, 1)
+	c, rec := suite.mockGetAllExpenseTypeRequest()
+	handler := NewHandler(suite.expenseTypeServiceMock, suite.getValidator())
+
+	if assert.NoError(suite.T(), handler.GetAll(c)) {
+		suite.expenseTypeServiceMock.AssertCalled(suite.T(), "GetAll")
+		assert.Equal(suite.T(), http.StatusOK, rec.Code)
+		assert.Equal(suite.T(), expectedResponseBody, rec.Body.String())
+	}
+}
+
+func (suite *HandlerTestSuite) TestGivenThatServiceReturnUnexpectedError_whenGetAll_thenReturnErrorResponseWithInternalServerErrorStatus() {
+	expectedServiceError := expense.UnexpectedError{Msg: "fail"}
+	suite.expenseTypeServiceMock.MockGetAll([]interface{}{}, []interface{}{nil, expectedServiceError}, 1)
+	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusInternalServerError, unexpectedErrorMessage, expectedServiceError.Error(), "[]", 0)
+
+	c, rec := suite.mockGetAllExpenseTypeRequest()
+	handler := NewHandler(suite.expenseTypeServiceMock, suite.getValidator())
+
+	if assert.NoError(suite.T(), handler.GetAll(c)) {
+		suite.expenseTypeServiceMock.AssertCalled(suite.T(), "GetAll")
+		assert.Equal(suite.T(), http.StatusInternalServerError, rec.Code)
+		assert.Equal(suite.T(), expectedResponseBody, rec.Body.String())
+	}
+}
+
 func (suite *HandlerTestSuite) mockAddExpenseTypeRequest(body string) (echo.Context, *httptest.ResponseRecorder) {
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodPost, "/expense-type", strings.NewReader(body))
@@ -144,7 +184,15 @@ func (suite *HandlerTestSuite) mockAddExpenseTypeRequest(body string) (echo.Cont
 	return e.NewContext(req, rec), rec
 }
 
-func (suite *HandlerTestSuite) getAddExpenseRequestBodyFromExpense(expenseType *models.ExpenseType) string {
+func (suite *HandlerTestSuite) mockGetAllExpenseTypeRequest() (echo.Context, *httptest.ResponseRecorder) {
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/expense-type", nil)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	return e.NewContext(req, rec), rec
+}
+
+func (suite *HandlerTestSuite) getAddExpenseRequestBodyFromExpenseType(expenseType *models.ExpenseType) string {
 	addExpenseTypeBody := addExpenseTypeRequest{
 		Name: expenseType.Name,
 	}
@@ -153,14 +201,34 @@ func (suite *HandlerTestSuite) getAddExpenseRequestBodyFromExpense(expenseType *
 	return string(bodyBytes)
 }
 
-func (suite *HandlerTestSuite) getAddExpenseTypeResponseFromExpense(expenseType *models.ExpenseType) string {
+func (suite *HandlerTestSuite) getAddExpenseTypeResponseFromExpenseType(expenseType *models.ExpenseType) string {
 	response := addExpenseTypeResponse{
-		ID:   expenseType.Id.String(),
-		Name: expenseType.Name,
+		ExpenseType: suite.mapExpenseTypeToExpenseTypeBody(expenseType),
 	}
 
 	bodyBytes, _ := json.Marshal(response)
 	return string(bodyBytes) + "\n"
+}
+
+func (suite *HandlerTestSuite) getGetAllExpenseTypeResponseFromExpenseTypes(expenseTypes []*models.ExpenseType) string {
+	bodyBytes, _ := json.Marshal(suite.mapExpenseTypesToGetAllResponse(expenseTypes))
+	return string(bodyBytes) + "\n"
+}
+
+func (suite *HandlerTestSuite) mapExpenseTypesToGetAllResponse(expenseTypes []*models.ExpenseType) getAllResponse {
+	expenseTypeBodies := []expenseTypeBody{}
+	for _, expenseType := range expenseTypes {
+		expenseTypeBodies = append(expenseTypeBodies, suite.mapExpenseTypeToExpenseTypeBody(expenseType))
+	}
+
+	return getAllResponse{ExpenseTypes: expenseTypeBodies}
+}
+
+func (suite *HandlerTestSuite) mapExpenseTypeToExpenseTypeBody(expenseType *models.ExpenseType) expenseTypeBody {
+	return expenseTypeBody{
+		ID:   expenseType.Id.String(),
+		Name: expenseType.Name,
+	}
 }
 
 func (suite *HandlerTestSuite) getValidator() fieldvalidation.FieldsValidator {

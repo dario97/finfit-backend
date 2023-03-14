@@ -42,10 +42,28 @@ func (s *ServiceMock) Add(command *AddCommand) (*models.ExpenseType, error) {
 	}
 }
 
+func (s *ServiceMock) GetAll() ([]*models.ExpenseType, error) {
+	args := s.Called()
+
+	err := args.Error(1)
+	expenseType := args.Get(0)
+	if err == nil && expenseType == nil {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	} else {
+		return args.Get(0).([]*models.ExpenseType), nil
+	}
+}
+
 func (s *ServiceMock) MockAdd(callArguments, returnArguments []interface{}, times int) {
 	s.On("Add", callArguments...).Return(returnArguments...).Times(times)
 }
 
 func (s *ServiceMock) MockGetByID(callArguments, returnArguments []interface{}, times int) {
 	s.On("GetById", callArguments...).Return(returnArguments...).Times(times)
+}
+
+func (s *ServiceMock) MockGetAll(callArguments, returnArguments []interface{}, times int) {
+	s.On("GetAll", callArguments...).Return(returnArguments...).Times(times)
 }
