@@ -58,6 +58,11 @@ func (r repository) Add(expenseType *models.ExpenseType) (*models.ExpenseType, e
 	return expenseType, nil
 }
 
+func (r repository) GetAll() ([]*models.ExpenseType, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (r repository) mapExpenseTypeDBModelFromExpenseType(expenseType *models.ExpenseType) ExpenseType {
 	return ExpenseType{
 		ID:   expenseType.Id.String(),
