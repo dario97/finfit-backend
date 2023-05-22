@@ -29,10 +29,56 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_NAME}
       - DATABASE_HOST=${DB_HOST}
+    command: [ "postgres", "-c", "wal_level=logical" ]
     ports:
       - '5432:5432'
     volumes:
       - app_data:/var/lib/postgresql/database
+    networks:
+      - application
+  zookeeper:
+    image: debezium/zookeeper:2.2
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    networks:
+      - application
+  kafka:
+    image: debezium/kafka:2.2
+    container_name: kafka
+    ports:
+      - "9092:9092"
+      - "9094:9094"
+    links:
+      - zookeeper
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: ${HOST_IP}
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_DELETE_TOPIC_ENABLE: 'true'
+      ZOOKEEPER_CONNECT: zookeeper:2181
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    hostname: kafka
+    networks:
+      - application
+
+  postgres-connector:
+    image: debezium/connect:2.2
+    container_name: postgres-debezium
+    ports:
+      - "8083:8083"
+    links:
+      - kafka
+    depends_on:
+      - kafka
+      - database
+    environment:
+      - BOOTSTRAP_SERVERS=kafka:9092
+      - GROUP_ID=pg
+      - CONFIG_STORAGE_TOPIC=pg_connect_configs
+      - OFFSET_STORAGE_TOPIC=pg_connect_offsets
+      - STATUS_STORAGE_TOPIC=pg_connect_statuses
     networks:
       - application
 volumes:
