@@ -16,3 +16,11 @@ func NewSearchInPeriodCommand(startDate time.Time, endDate time.Time) (*SearchIn
 	}
 	return &SearchInPeriodCommand{startDate: startDate, endDate: endDate}, nil
 }
+
+func (s SearchInPeriodCommand) StartDate() time.Time {
+	return s.startDate
+}
+
+func (s SearchInPeriodCommand) EndDate() time.Time {
+	return s.endDate
+}
