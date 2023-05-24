@@ -53,6 +53,7 @@ func (suite *ExpenseServiceTestSuite) TestGivenAnExpense_WhenAdd_ThenReturnCreat
 	expectedCreatedExpense := &models.Expense{
 		Id:          pkg.NewUUID(),
 		Amount:      expenseToCreate.Amount,
+		Currency:    expenseToCreate.Currency,
 		ExpenseDate: expenseToCreate.ExpenseDate,
 		Description: expenseToCreate.Description,
 		ExpenseType: expenseToCreate.ExpenseType,
@@ -191,6 +192,7 @@ func assertEqualsExpense(t *testing.T, expected *models.Expense, actual *models.
 func buildAddCommandFromExpense(expense *models.Expense) *AddCommand {
 	return &AddCommand{
 		amount:        expense.Amount,
+		currency:      expense.Currency,
 		expenseDate:   expense.ExpenseDate,
 		description:   expense.Description,
 		expenseTypeId: expense.ExpenseType.Id,

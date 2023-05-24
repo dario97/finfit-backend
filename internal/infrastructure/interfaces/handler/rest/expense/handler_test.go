@@ -209,8 +209,9 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutExpenseDate_WhenAdd_Then
 		time.Time{},
 		"Lomitos", models.NewExpenseType("Delivery"))
 
-	requestBody := fmt.Sprintf(`{"amount":%f,"description":"%s","expense_type":{"id":"%s"}}`,
+	requestBody := fmt.Sprintf(`{"amount":%f,"currency":"%s","description":"%s","expense_type":{"id":"%s"}}`,
 		expenseToCreate.Amount,
+		expenseToCreate.Currency,
 		expenseToCreate.Description,
 		expenseToCreate.ExpenseType.Id.String())
 
@@ -237,8 +238,9 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithBadFormattedExpenseDate_Whe
 		time.Time{},
 		"Lomitos", models.NewExpenseType("Delivery"))
 
-	requestBody := fmt.Sprintf(`{"amount":%f,"expense_date":"%s","description":"%s","expense_type":{"id":"%s"}}`,
+	requestBody := fmt.Sprintf(`{"amount":%f,"currency":"%s","expense_date":"%s","description":"%s","expense_type":{"id":"%s"}}`,
 		expenseToCreate.Amount,
+		"ARS",
 		"12-2013-12",
 		expenseToCreate.Description,
 		expenseToCreate.ExpenseType.Id.String())
@@ -266,8 +268,9 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutExpenseType_WhenAdd_Then
 		time.Date(2022, time.March, 15, 0, 0, 0, 0, time.UTC),
 		"Lomitos", nil)
 
-	requestBody := fmt.Sprintf(`{"amount":%f,"expense_date":"%s","description":"%s"}`,
+	requestBody := fmt.Sprintf(`{"amount":%f,"currency":"%s","expense_date":"%s","description":"%s"}`,
 		expenseToCreate.Amount,
+		expenseToCreate.Currency,
 		"2013-02-01",
 		expenseToCreate.Description)
 	c, rec := suite.mockAddExpenseRequest(requestBody)
@@ -287,7 +290,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutExpenseType_WhenAdd_Then
 }
 
 func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutExpenseTypeID_WhenAdd_ThenReturnErrorWithBadRequestStatus() {
-	requestBody := `{"amount":100.2,"description":"Lomitos","expense_date":"2022-03-15","expense_type":{}}`
+	requestBody := `{"amount":100.2,"currency":"ARS","description":"Lomitos","expense_date":"2022-03-15","expense_type":{}}`
 	c, rec := suite.mockAddExpenseRequest(requestBody)
 	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":\"some fields are invalid\",\"field_errors\":[{\"field\":\"ID\",\"message\":\"ID is a required field\"}],\"error_code\":1}\n"
 
@@ -300,7 +303,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutExpenseTypeID_WhenAdd_Th
 }
 
 func (suite *HandlerTestSuite) TestGivenAnExpenseWithNoUIIDExpenseTypeID_WhenAdd_ThenReturnErrorWithBadRequestStatus() {
-	requestBody := `{"amount":100.2,"description":"Lomitos","expense_date":"2022-03-15","expense_type":{"id":"fruta-uuid"}}`
+	requestBody := `{"amount":100.2,"currency":"ARS","description":"Lomitos","expense_date":"2022-03-15","expense_type":{"id":"fruta-uuid"}}`
 	c, rec := suite.mockAddExpenseRequest(requestBody)
 	expectedResponseBody := "{\"status_code\":400,\"msg\":\"some fields are invalid\",\"error_detail\":\"some fields are invalid\",\"field_errors\":[{\"field\":\"ID\",\"message\":\"ID must be a valid UUID\"}],\"error_code\":1}\n"
 
@@ -463,6 +466,7 @@ func (suite *HandlerTestSuite) getAddExpenseResponseFromExpense(expense *models.
 func (suite *HandlerTestSuite) getAddExpenseRequestBodyFromExpense(expense *models.Expense) string {
 	addExpenseBody := addExpenseRequest{
 		Amount:      expense.Amount,
+		Currency:    expense.Currency,
 		ExpenseDate: expense.ExpenseDate.Format(dateFormat),
 		Description: expense.Description,
 		ExpenseType: &addExpenseRequestExpenseTypeBody{
