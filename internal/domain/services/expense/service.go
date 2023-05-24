@@ -38,7 +38,7 @@ func (s service) Add(command *AddCommand) (*models.Expense, error) {
 		return nil, InvalidExpenseTypeError{Msg: invalidExpenseTypeErrorMsg}
 	}
 
-	expenseToCreate := models.NewExpense(command.amount, command.expenseDate, command.description, expenseType)
+	expenseToCreate := models.NewExpense(command.amount, command.currency, command.expenseDate, command.description, expenseType)
 
 	createdExpense, repoError := s.repository.Add(expenseToCreate)
 

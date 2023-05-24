@@ -95,7 +95,7 @@ func (h handler) mapAddCommandFromRequestBody(body addExpenseRequest) (*expense.
 		return nil, err
 	}
 
-	return expense.NewAddCommand(body.Amount, date, body.Description, expenseTypeId)
+	return expense.NewAddCommand(body.Amount, body.Currency, date, body.Description, expenseTypeId)
 }
 
 func (h handler) mapSearchCommandFromRequestBody(params searchInPeriodQueryParams) (*expense.SearchInPeriodCommand, error) {
@@ -158,6 +158,7 @@ type addExpenseRequest struct {
 	ExpenseDate string                            `json:"expense_date,omitempty" validate:"required,datetime=2006-01-02"`
 	Description string                            `json:"description,omitempty"`
 	ExpenseType *addExpenseRequestExpenseTypeBody `json:"expense_type,omitempty" validate:"required"`
+	Currency    string                            `json:"currency" validate:"iso4217"`
 }
 
 type addExpenseRequestExpenseTypeBody struct {

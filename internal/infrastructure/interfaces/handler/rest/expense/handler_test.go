@@ -55,6 +55,7 @@ func TestHandlerTestSuite(t *testing.T) {
 
 func (suite *HandlerTestSuite) TestGivenAnExpenseToCreate_WhenAdd_ThenReturnStatusOkWithCreatedExpense() {
 	expectedCreatedExpense := models.NewExpense(100.2,
+		"ARS",
 		time.Date(2022, time.March, 15, 0, 0, 0, 0, time.UTC),
 		"Lomitos", models.NewExpenseType("Delivery"))
 
@@ -64,6 +65,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseToCreate_WhenAdd_ThenReturnStat
 	expectedResponseBody := suite.getAddExpenseResponseFromExpense(expectedCreatedExpense)
 
 	addCommand, _ := expenseService.NewAddCommand(expectedCreatedExpense.Amount,
+		expectedCreatedExpense.Currency,
 		expectedCreatedExpense.ExpenseDate,
 		expectedCreatedExpense.Description,
 		expectedCreatedExpense.ExpenseType.Id)
@@ -80,6 +82,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseToCreate_WhenAdd_ThenReturnStat
 
 func (suite *HandlerTestSuite) TestGivenAnExpenseToCreateWithoutDescription_WhenAdd_ThenReturnStatusOkWithCreatedExpense() {
 	expectedCreatedExpense := models.NewExpense(100.2,
+		"ARS",
 		time.Date(2022, time.March, 15, 0, 0, 0, 0, time.UTC),
 		"", models.NewExpenseType("Delivery"))
 
@@ -88,6 +91,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseToCreateWithoutDescription_When
 	expectedResponseBody := suite.getAddExpenseResponseFromExpense(expectedCreatedExpense)
 
 	addCommand, _ := expenseService.NewAddCommand(expectedCreatedExpense.Amount,
+		expectedCreatedExpense.Currency,
 		expectedCreatedExpense.ExpenseDate,
 		expectedCreatedExpense.Description,
 		expectedCreatedExpense.ExpenseType.Id)
@@ -104,6 +108,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseToCreateWithoutDescription_When
 
 func (suite *HandlerTestSuite) TestGivenAnInvalidExpenseType_WhenAdd_ThenReturnErrorWithBadRequestStatus() {
 	expenseToCreate := models.NewExpense(100.2,
+		"ARS",
 		time.Date(2022, time.March, 15, 0, 0, 0, 0, time.UTC),
 		"Lomitos", models.NewExpenseType("Delivery"))
 
@@ -111,6 +116,7 @@ func (suite *HandlerTestSuite) TestGivenAnInvalidExpenseType_WhenAdd_ThenReturnE
 	c, rec := suite.mockAddExpenseRequest(requestBody)
 
 	addCommand, _ := expenseService.NewAddCommand(expenseToCreate.Amount,
+		expenseToCreate.Currency,
 		expenseToCreate.ExpenseDate,
 		expenseToCreate.Description,
 		expenseToCreate.ExpenseType.Id)
@@ -130,6 +136,7 @@ func (suite *HandlerTestSuite) TestGivenAnInvalidExpenseType_WhenAdd_ThenReturnE
 
 func (suite *HandlerTestSuite) TestGivenAnUnexpectedError_WhenAdd_ThenReturnErrorWithInternalServerErrorStatus() {
 	expenseToCreate := models.NewExpense(100.2,
+		"ARS",
 		time.Date(2022, time.March, 15, 0, 0, 0, 0, time.UTC),
 		"Lomitos", models.NewExpenseType("Delivery"))
 
@@ -137,6 +144,7 @@ func (suite *HandlerTestSuite) TestGivenAnUnexpectedError_WhenAdd_ThenReturnErro
 	c, rec := suite.mockAddExpenseRequest(requestBody)
 
 	addCommand, _ := expenseService.NewAddCommand(expenseToCreate.Amount,
+		expenseToCreate.Currency,
 		expenseToCreate.ExpenseDate,
 		expenseToCreate.Description,
 		expenseToCreate.ExpenseType.Id)
@@ -155,6 +163,7 @@ func (suite *HandlerTestSuite) TestGivenAnUnexpectedError_WhenAdd_ThenReturnErro
 
 func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutAmount_WhenAdd_ThenReturnErrorWithBadRequestStatus() {
 	expenseToCreate := models.NewExpense(0,
+		"ARS",
 		time.Date(2022, time.March, 15, 0, 0, 0, 0, time.UTC),
 		"Lomitos", models.NewExpenseType("Delivery"))
 
@@ -173,6 +182,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutAmount_WhenAdd_ThenRetur
 
 func (suite *HandlerTestSuite) TestGivenAnExpenseWithAmountLowerThanZero_WhenAdd_ThenReturnErrorWithBadRequestStatus() {
 	expenseToCreate := models.NewExpense(-1,
+		"ARS",
 		time.Date(2022, time.March, 15, 0, 0, 0, 0, time.UTC),
 		"Lomitos", models.NewExpenseType("Delivery"))
 
@@ -195,6 +205,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithAmountLowerThanZero_WhenAdd
 
 func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutExpenseDate_WhenAdd_ThenReturnErrorWithBadRequestStatus() {
 	expenseToCreate := models.NewExpense(100,
+		"ARS",
 		time.Time{},
 		"Lomitos", models.NewExpenseType("Delivery"))
 
@@ -222,6 +233,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutExpenseDate_WhenAdd_Then
 
 func (suite *HandlerTestSuite) TestGivenAnExpenseWithBadFormattedExpenseDate_WhenAdd_ThenReturnErrorWithBadRequestStatus() {
 	expenseToCreate := models.NewExpense(100,
+		"ARS",
 		time.Time{},
 		"Lomitos", models.NewExpenseType("Delivery"))
 
@@ -250,6 +262,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseWithBadFormattedExpenseDate_Whe
 
 func (suite *HandlerTestSuite) TestGivenAnExpenseWithoutExpenseType_WhenAdd_ThenReturnErrorWithBadRequestStatus() {
 	expenseToCreate := models.NewExpense(10.2,
+		"ARS",
 		time.Date(2022, time.March, 15, 0, 0, 0, 0, time.UTC),
 		"Lomitos", nil)
 
@@ -417,9 +430,11 @@ func (suite *HandlerTestSuite) TestGivenThatStartDateIsGreaterThanEndDate_WhenSe
 
 func (suite *HandlerTestSuite) getExpenses() []*models.Expense {
 	return []*models.Expense{models.NewExpense(100.2,
+		"ARS",
 		time.Date(2022, time.May, 15, 0, 0, 0, 0, time.UTC),
 		"Lomitos", models.NewExpenseType("Delivery")),
 		models.NewExpense(100.2,
+			"ARS",
 			time.Date(2022, time.September, 15, 0, 0, 0, 0, time.UTC),
 			"Lomitos", models.NewExpenseType("Delivery"))}
 }

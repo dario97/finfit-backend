@@ -156,8 +156,8 @@ func (suite *ExpenseServiceTestSuite) TestGivenThatRepositoryFails_WhenSearchInP
 
 func (suite *ExpenseServiceTestSuite) getExpenses() []*models.Expense {
 	return []*models.Expense{
-		models.NewExpense(10.3, time.Date(2022, 5, 28, 0, 0, 0, 0, time.Local), "Lomitos", models.NewExpenseType("Servicios")),
-		models.NewExpense(10.3, time.Date(2022, 7, 28, 0, 0, 0, 0, time.Local), "Lomitos", models.NewExpenseType("Servicios")),
+		models.NewExpense(10.3, "ARS", time.Date(2022, 5, 28, 0, 0, 0, 0, time.Local), "Lomitos", models.NewExpenseType("Servicios")),
+		models.NewExpense(10.3, "ARS", time.Date(2022, 7, 28, 0, 0, 0, 0, time.Local), "Lomitos", models.NewExpenseType("Servicios")),
 	}
 }
 
@@ -165,6 +165,7 @@ func getExpense() *models.Expense {
 	return &models.Expense{
 		Id:          pkg.NewUUID(),
 		Amount:      100.50,
+		Currency:    "ARS",
 		ExpenseDate: time.Date(2022, 1, 1, 10, 0, 0, 0, time.UTC),
 		Description: "Lomitos",
 		ExpenseType: getExpenseType(),
