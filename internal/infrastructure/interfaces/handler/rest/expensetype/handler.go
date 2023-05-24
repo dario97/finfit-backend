@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	fieldValidationErrorMessage = "some fields are invalid"
-	bodyIsInvalidErrorMessage   = "body is invalid"
-	unexpectedErrorMessage      = "unexpected error"
+	FieldValidationErrorMessage = "some fields are invalid"
+	BodyIsInvalidErrorMessage   = "body is invalid"
+	UnexpectedErrorMessage      = "unexpected error"
 )
 
 type Handler interface {
@@ -30,24 +30,24 @@ func NewHandler(service expensetype.Service, fieldsValidator fieldvalidation.Fie
 }
 
 func (h handler) Add(context echo.Context) error {
-	requestBody := new(addExpenseTypeRequest)
+	requestBody := new(AddExpenseTypeRequest)
 
 	if err := context.Bind(requestBody); err != nil {
-		return h.buildErrorResponse(context, http.StatusBadRequest, bodyIsInvalidErrorMessage, err.Error(), []fieldvalidation.FieldError{}, 0)
+		return h.buildErrorResponse(context, http.StatusBadRequest, BodyIsInvalidErrorMessage, err.Error(), []fieldvalidation.FieldError{}, 0)
 	}
 
 	if fieldValidationErrors := h.fieldsValidator.ValidateFields(requestBody); len(fieldValidationErrors) > 0 {
-		return h.buildErrorResponse(context, http.StatusBadRequest, fieldValidationErrorMessage, fieldValidationErrorMessage, fieldValidationErrors, rest.FieldValidationErrorCode)
+		return h.buildErrorResponse(context, http.StatusBadRequest, FieldValidationErrorMessage, FieldValidationErrorMessage, fieldValidationErrors, rest.FieldValidationErrorCode)
 	}
 
 	command, err := h.mapAddCommandFromRequestBody(*requestBody)
 	if err != nil {
-		return h.buildErrorResponse(context, http.StatusBadRequest, fieldValidationErrorMessage, err.Error(), []fieldvalidation.FieldError{}, 0)
+		return h.buildErrorResponse(context, http.StatusBadRequest, FieldValidationErrorMessage, err.Error(), []fieldvalidation.FieldError{}, 0)
 	}
 
 	addedExpenseType, err := h.service.Add(command)
 	if err != nil {
-		return h.buildErrorResponse(context, http.StatusInternalServerError, unexpectedErrorMessage, err.Error(), []fieldvalidation.FieldError{}, 0)
+		return h.buildErrorResponse(context, http.StatusInternalServerError, UnexpectedErrorMessage, err.Error(), []fieldvalidation.FieldError{}, 0)
 	}
 
 	return context.JSON(http.StatusCreated, h.mapAddedExpenseTypeToExpenseTypeResponse(addedExpenseType))
@@ -56,13 +56,13 @@ func (h handler) Add(context echo.Context) error {
 func (h handler) GetAll(context echo.Context) error {
 	expenseTypes, err := h.service.GetAll()
 	if err != nil {
-		return h.buildErrorResponse(context, http.StatusInternalServerError, unexpectedErrorMessage, err.Error(), []fieldvalidation.FieldError{}, 0)
+		return h.buildErrorResponse(context, http.StatusInternalServerError, UnexpectedErrorMessage, err.Error(), []fieldvalidation.FieldError{}, 0)
 	}
 
 	return context.JSON(http.StatusOK, h.mapExpenseTypesToGetAllResponse(expenseTypes))
 }
 
-func (h handler) mapAddCommandFromRequestBody(body addExpenseTypeRequest) (*expensetype.AddCommand, error) {
+func (h handler) mapAddCommandFromRequestBody(body AddExpenseTypeRequest) (*expensetype.AddCommand, error) {
 	return expensetype.NewAddCommand(body.Name)
 }
 
@@ -71,41 +71,41 @@ func (h handler) buildErrorResponse(ctx echo.Context, statusCode int, errorMessa
 	return ctx.JSON(statusCode, errorResponse)
 }
 
-func (h handler) mapAddedExpenseTypeToExpenseTypeResponse(expenseType *models.ExpenseType) addExpenseTypeResponse {
-	return addExpenseTypeResponse{
+func (h handler) mapAddedExpenseTypeToExpenseTypeResponse(expenseType *models.ExpenseType) AddExpenseTypeResponse {
+	return AddExpenseTypeResponse{
 		ExpenseType: h.mapExpenseTypeToExpenseTypeBody(expenseType),
 	}
 }
 
-func (h handler) mapExpenseTypesToGetAllResponse(expenseTypes []*models.ExpenseType) getAllResponse {
-	expenseTypeBodies := []expenseTypeBody{}
+func (h handler) mapExpenseTypesToGetAllResponse(expenseTypes []*models.ExpenseType) GetAllResponse {
+	expenseTypeBodies := []Body{}
 	for _, expenseType := range expenseTypes {
 		expenseTypeBodies = append(expenseTypeBodies, h.mapExpenseTypeToExpenseTypeBody(expenseType))
 	}
 
-	return getAllResponse{ExpenseTypes: expenseTypeBodies}
+	return GetAllResponse{ExpenseTypes: expenseTypeBodies}
 }
 
-func (h handler) mapExpenseTypeToExpenseTypeBody(expenseType *models.ExpenseType) expenseTypeBody {
-	return expenseTypeBody{
-		ID:   expenseType.Id.String(),
-		Name: expenseType.Name,
+func (h handler) mapExpenseTypeToExpenseTypeBody(expenseType *models.ExpenseType) Body {
+	return Body{
+		ID:   expenseType.Id().String(),
+		Name: expenseType.Name(),
 	}
 }
 
-type addExpenseTypeRequest struct {
+type AddExpenseTypeRequest struct {
 	Name string `json:"name,omitempty" validate:"required,min=3,max=32"`
 }
 
-type addExpenseTypeResponse struct {
-	ExpenseType expenseTypeBody `json:"expense_type"`
+type AddExpenseTypeResponse struct {
+	ExpenseType Body `json:"expense_type"`
 }
 
-type getAllResponse struct {
-	ExpenseTypes []expenseTypeBody `json:"expense_types"`
+type GetAllResponse struct {
+	ExpenseTypes []Body `json:"expense_types"`
 }
 
-type expenseTypeBody struct {
+type Body struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }

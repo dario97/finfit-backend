@@ -1,8 +1,9 @@
-package expense
+package expense_test
 
 import (
 	"errors"
 	"finfit-backend/internal/domain/models"
+	"finfit-backend/internal/domain/services/expense"
 	"finfit-backend/internal/domain/services/expensetype"
 	"finfit-backend/pkg"
 	"github.com/google/uuid"
@@ -15,15 +16,15 @@ import (
 
 type ExpenseServiceTestSuite struct {
 	suite.Suite
-	expenseRepositoryMock  *RepositoryMock
+	expenseRepositoryMock  *expense.RepositoryMock
 	expenseTypeServiceMock *expensetype.ServiceMock
-	service                Service
+	service                expense.Service
 }
 
 func (suite *ExpenseServiceTestSuite) SetupSuite() {
-	suite.expenseRepositoryMock = NewRepositoryMock()
+	suite.expenseRepositoryMock = expense.NewRepositoryMock()
 	suite.expenseTypeServiceMock = expensetype.NewServiceMock()
-	suite.service = NewService(suite.expenseRepositoryMock, suite.expenseTypeServiceMock)
+	suite.service = expense.NewService(suite.expenseRepositoryMock, suite.expenseTypeServiceMock)
 	suite.patchUUIDFunction()
 }
 
@@ -49,18 +50,10 @@ func TestServiceTestSuite(t *testing.T) {
 
 func (suite *ExpenseServiceTestSuite) TestGivenAnExpense_WhenAdd_ThenReturnCreatedExpense() {
 	expenseToCreate := getExpense()
-
-	expectedCreatedExpense := &models.Expense{
-		Id:          pkg.NewUUID(),
-		Amount:      expenseToCreate.Amount,
-		Currency:    expenseToCreate.Currency,
-		ExpenseDate: expenseToCreate.ExpenseDate,
-		Description: expenseToCreate.Description,
-		ExpenseType: expenseToCreate.ExpenseType,
-	}
+	expectedCreatedExpense := expenseToCreate
 
 	suite.expenseRepositoryMock.MockAdd([]interface{}{expenseToCreate}, []interface{}{expectedCreatedExpense, nil}, 1)
-	suite.expenseTypeServiceMock.MockGetByID([]interface{}{expenseToCreate.ExpenseType.Id}, []interface{}{expenseToCreate.ExpenseType, nil}, 1)
+	suite.expenseTypeServiceMock.MockGetByID([]interface{}{expenseToCreate.ExpenseType().Id()}, []interface{}{expenseToCreate.ExpenseType(), nil}, 1)
 
 	actualCreatedExpense, err := suite.service.Add(buildAddCommandFromExpense(expenseToCreate))
 
@@ -72,11 +65,11 @@ func (suite *ExpenseServiceTestSuite) TestGivenThatFailToGetExpenseType_WhenAdd_
 	expenseToCreate := getExpense()
 
 	expenseTypeServiceError := errors.New("fail to get expense type")
-	expectedError := UnexpectedError{
+	expectedError := expense.UnexpectedError{
 		Msg: expenseTypeServiceError.Error(),
 	}
 
-	suite.expenseTypeServiceMock.MockGetByID([]interface{}{expenseToCreate.ExpenseType.Id}, []interface{}{nil, expenseTypeServiceError}, 1)
+	suite.expenseTypeServiceMock.MockGetByID([]interface{}{expenseToCreate.ExpenseType().Id()}, []interface{}{nil, expenseTypeServiceError}, 1)
 
 	actualCreatedExpense, err := suite.service.Add(buildAddCommandFromExpense(expenseToCreate))
 
@@ -88,11 +81,11 @@ func (suite *ExpenseServiceTestSuite) TestGivenThatFailToGetExpenseType_WhenAdd_
 func (suite *ExpenseServiceTestSuite) TestGivenThatExpenseTypeNotExists_WhenAdd_ThenReturnError() {
 	expenseToCreate := getExpense()
 
-	expectedError := InvalidExpenseTypeError{
+	expectedError := expense.InvalidExpenseTypeError{
 		Msg: "the expense type doesn't exists",
 	}
 
-	suite.expenseTypeServiceMock.MockGetByID([]interface{}{expenseToCreate.ExpenseType.Id}, []interface{}{nil, nil}, 1)
+	suite.expenseTypeServiceMock.MockGetByID([]interface{}{expenseToCreate.ExpenseType().Id()}, []interface{}{nil, nil}, 1)
 
 	actualCreatedExpense, err := suite.service.Add(buildAddCommandFromExpense(expenseToCreate))
 
@@ -105,11 +98,11 @@ func (suite *ExpenseServiceTestSuite) TestGivenThatSaveExpenseIntoDatabaseFails_
 	expenseToCreate := getExpense()
 
 	repoError := errors.New("fail to save expense")
-	expectedError := UnexpectedError{
+	expectedError := expense.UnexpectedError{
 		Msg: repoError.Error(),
 	}
 
-	suite.expenseTypeServiceMock.MockGetByID([]interface{}{expenseToCreate.ExpenseType.Id}, []interface{}{expenseToCreate.ExpenseType, nil}, 1)
+	suite.expenseTypeServiceMock.MockGetByID([]interface{}{expenseToCreate.ExpenseType().Id()}, []interface{}{expenseToCreate.ExpenseType(), nil}, 1)
 	suite.expenseRepositoryMock.MockAdd([]interface{}{expenseToCreate}, []interface{}{nil, repoError}, 1)
 
 	actualCreatedExpense, err := suite.service.Add(buildAddCommandFromExpense(expenseToCreate))
@@ -122,12 +115,12 @@ func (suite *ExpenseServiceTestSuite) TestGivenThatSaveExpenseIntoDatabaseFails_
 func (suite *ExpenseServiceTestSuite) TestGivenAPeriod_WhenSearchInPeriod_ThenReturnAListOfExpenses() {
 	expensesToReturn := suite.getExpenses()
 
-	searchInPeriodCommand, _ := NewSearchInPeriodCommand(
+	searchInPeriodCommand, _ := expense.NewSearchInPeriodCommand(
 		time.Date(2022, 5, 23, 0, 0, 0, 0, time.Local),
 		time.Date(2022, 8, 23, 0, 0, 0, 0, time.Local))
 
 	suite.expenseRepositoryMock.MockSearchInPeriod(
-		[]interface{}{searchInPeriodCommand.startDate, searchInPeriodCommand.endDate},
+		[]interface{}{searchInPeriodCommand.StartDate(), searchInPeriodCommand.EndDate()},
 		[]interface{}{expensesToReturn, nil},
 		1)
 
@@ -140,18 +133,18 @@ func (suite *ExpenseServiceTestSuite) TestGivenAPeriod_WhenSearchInPeriod_ThenRe
 }
 
 func (suite *ExpenseServiceTestSuite) TestGivenThatRepositoryFails_WhenSearchInPeriod_ThenReturnError() {
-	searchInPeriodCommand, _ := NewSearchInPeriodCommand(
+	searchInPeriodCommand, _ := expense.NewSearchInPeriodCommand(
 		time.Date(2022, 5, 23, 0, 0, 0, 0, time.Local),
 		time.Date(2022, 8, 23, 0, 0, 0, 0, time.Local))
 
 	suite.expenseRepositoryMock.MockSearchInPeriod(
-		[]interface{}{searchInPeriodCommand.startDate, searchInPeriodCommand.endDate},
+		[]interface{}{searchInPeriodCommand.StartDate(), searchInPeriodCommand.EndDate()},
 		[]interface{}{nil, errors.New("fail to get expenses")},
 		1)
 
 	actualExpenses, err := suite.service.SearchInPeriod(searchInPeriodCommand)
 
-	require.ErrorAs(suite.T(), err, &UnexpectedError{})
+	require.ErrorAs(suite.T(), err, &expense.UnexpectedError{})
 	require.Nil(suite.T(), actualExpenses)
 }
 
@@ -163,38 +156,22 @@ func (suite *ExpenseServiceTestSuite) getExpenses() []*models.Expense {
 }
 
 func getExpense() *models.Expense {
-	return &models.Expense{
-		Id:          pkg.NewUUID(),
-		Amount:      100.50,
-		Currency:    "ARS",
-		ExpenseDate: time.Date(2022, 1, 1, 10, 0, 0, 0, time.UTC),
-		Description: "Lomitos",
-		ExpenseType: getExpenseType(),
-	}
-
+	return models.NewExpense(100.50, "ARS", time.Date(2022, 1, 1, 10, 0, 0, 0, time.UTC), "Lomitos", getExpenseType())
 }
 
 func getExpenseType() *models.ExpenseType {
-	return &models.ExpenseType{
-		Id:   pkg.NewUUID(),
-		Name: "Delivery",
-	}
+	return models.NewExpenseType("Delivery")
 }
 
 func assertEqualsExpense(t *testing.T, expected *models.Expense, actual *models.Expense) {
-	assert.Equal(t, expected.Id, actual.Id, "id are not equals")
-	assert.Equal(t, expected.ExpenseType, actual.ExpenseType, "expenseTypes are not equals")
-	assert.Equal(t, expected.Amount, actual.Amount, "amounts are not equals")
-	assert.Equalf(t, expected.ExpenseDate, actual.ExpenseDate, "expenseDates are not equals")
-	assert.Equalf(t, expected.Description, actual.Description, "descriptions are not equals")
+	assert.Equal(t, expected.Id(), actual.Id(), "id are not equals")
+	assert.Equal(t, expected.ExpenseType(), actual.ExpenseType(), "expenseTypes are not equals")
+	assert.Equal(t, expected.Amount(), actual.Amount(), "amounts are not equals")
+	assert.Equalf(t, expected.ExpenseDate(), actual.ExpenseDate(), "expenseDates are not equals")
+	assert.Equalf(t, expected.Description(), actual.Description(), "descriptions are not equals")
 }
 
-func buildAddCommandFromExpense(expense *models.Expense) *AddCommand {
-	return &AddCommand{
-		amount:        expense.Amount,
-		currency:      expense.Currency,
-		expenseDate:   expense.ExpenseDate,
-		description:   expense.Description,
-		expenseTypeId: expense.ExpenseType.Id,
-	}
+func buildAddCommandFromExpense(domainExpense *models.Expense) *expense.AddCommand {
+	addCommand, _ := expense.NewAddCommand(domainExpense.Amount(), domainExpense.Currency(), domainExpense.ExpenseDate(), domainExpense.Description(), domainExpense.ExpenseType().Id())
+	return addCommand
 }

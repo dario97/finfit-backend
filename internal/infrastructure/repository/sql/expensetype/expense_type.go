@@ -15,8 +15,5 @@ type ExpenseType struct {
 
 func (receiver ExpenseType) MapToDomainExpenseType() *models.ExpenseType {
 	id, _ := uuid.Parse(receiver.ID)
-	return &models.ExpenseType{
-		Id:   id,
-		Name: receiver.Name,
-	}
+	return models.NewExpenseTypeWithId(id, receiver.Name)
 }

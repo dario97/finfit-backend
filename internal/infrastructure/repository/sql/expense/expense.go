@@ -12,6 +12,7 @@ type Expense struct {
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 	Amount        float64
+	Currency      string
 	ExpenseDate   time.Time
 	Description   string
 	ExpenseTypeID string
@@ -20,11 +21,5 @@ type Expense struct {
 
 func (receiver Expense) MapToDomainExpense() *models.Expense {
 	id, _ := uuid.Parse(receiver.ID)
-	return &models.Expense{
-		Id:          id,
-		Amount:      receiver.Amount,
-		ExpenseDate: receiver.ExpenseDate,
-		Description: receiver.Description,
-		ExpenseType: receiver.ExpenseType.MapToDomainExpenseType(),
-	}
+	return models.NewExpenseWithId(id, receiver.Amount, receiver.Currency, receiver.ExpenseDate, receiver.Description, receiver.ExpenseType.MapToDomainExpenseType())
 }

@@ -29,7 +29,7 @@ func (r repository) GetByID(id uuid.UUID) (*models.ExpenseType, error) {
 		return nil, err
 	}
 
-	return r.mapExpenseTypeDbModelToExpenseType(storedExpenseType), nil
+	return storedExpenseType.MapToDomainExpenseType(), nil
 }
 
 func (r repository) GetByName(name string) (*models.ExpenseType, error) {
@@ -44,7 +44,7 @@ func (r repository) GetByName(name string) (*models.ExpenseType, error) {
 		return nil, err
 	}
 
-	return r.mapExpenseTypeDbModelToExpenseType(storedExpenseType), nil
+	return storedExpenseType.MapToDomainExpenseType(), nil
 }
 
 func (r repository) Add(expenseType *models.ExpenseType) (*models.ExpenseType, error) {
@@ -65,15 +65,7 @@ func (r repository) GetAll() ([]*models.ExpenseType, error) {
 
 func (r repository) mapExpenseTypeDBModelFromExpenseType(expenseType *models.ExpenseType) ExpenseType {
 	return ExpenseType{
-		ID:   expenseType.Id.String(),
-		Name: expenseType.Name,
-	}
-}
-
-func (r repository) mapExpenseTypeDbModelToExpenseType(expenseType ExpenseType) *models.ExpenseType {
-	id, _ := uuid.Parse(expenseType.ID)
-	return &models.ExpenseType{
-		Id:   id,
-		Name: expenseType.Name,
+		ID:   expenseType.Id().String(),
+		Name: expenseType.Name(),
 	}
 }

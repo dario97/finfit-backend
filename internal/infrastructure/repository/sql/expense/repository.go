@@ -55,10 +55,10 @@ func (r repository) SearchInPeriod(startDate time.Time, endDate time.Time) ([]*m
 
 func (r repository) mapExpenseDBModelFromExpense(expenseToAdd *models.Expense) Expense {
 	return Expense{
-		ID:            expenseToAdd.Id.String(),
-		Amount:        expenseToAdd.Amount,
-		ExpenseDate:   expenseToAdd.ExpenseDate,
-		Description:   expenseToAdd.Description,
-		ExpenseTypeID: expenseToAdd.ExpenseType.Id.String(),
+		ID:            expenseToAdd.Id().String(),
+		Amount:        expenseToAdd.Amount(),
+		ExpenseDate:   expenseToAdd.ExpenseDate(),
+		Description:   expenseToAdd.Description(),
+		ExpenseTypeID: expenseToAdd.ExpenseType().Id().String(),
 	}
 }

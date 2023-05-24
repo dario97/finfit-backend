@@ -1,8 +1,9 @@
-package expensetype
+package expensetype_test
 
 import (
 	"errors"
 	"finfit-backend/internal/domain/models"
+	"finfit-backend/internal/domain/services/expensetype"
 	"finfit-backend/pkg"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -13,13 +14,13 @@ import (
 
 type ServiceTestSuite struct {
 	suite.Suite
-	repositoryMock *RepositoryMock
-	service        Service
+	repositoryMock *expensetype.RepositoryMock
+	service        expensetype.Service
 }
 
 func (suite *ServiceTestSuite) SetupSuite() {
-	suite.repositoryMock = NewRepositoryMock()
-	suite.service = NewService(suite.repositoryMock)
+	suite.repositoryMock = expensetype.NewRepositoryMock()
+	suite.service = expensetype.NewService(suite.repositoryMock)
 	suite.patchUUIDFunction()
 }
 
@@ -44,9 +45,9 @@ func TestServiceTestSuite(t *testing.T) {
 
 func (suite *ServiceTestSuite) TestGivenAnID_whenGetById_thenReturnExpenseType() {
 	expectedExpenseType := models.NewExpenseType("Servicios")
-	suite.repositoryMock.MockGetByID([]interface{}{expectedExpenseType.Id}, []interface{}{expectedExpenseType, nil}, 1)
+	suite.repositoryMock.MockGetByID([]interface{}{expectedExpenseType.Id()}, []interface{}{expectedExpenseType, nil}, 1)
 
-	actualExpenseType, err := suite.service.GetById(expectedExpenseType.Id)
+	actualExpenseType, err := suite.service.GetById(expectedExpenseType.Id())
 
 	require.NoError(suite.T(), err)
 	suite.assertEqualsExpenseType(expectedExpenseType, actualExpenseType)
@@ -58,13 +59,13 @@ func (suite *ServiceTestSuite) TestGivenThatRepositoryFails_whenGetById_thenRetu
 
 	actualExpenseType, err := suite.service.GetById(id)
 
-	require.ErrorAs(suite.T(), err, &UnexpectedError{})
+	require.ErrorAs(suite.T(), err, &expensetype.UnexpectedError{})
 	require.Nil(suite.T(), actualExpenseType)
 }
 
 func (suite *ServiceTestSuite) TestGivenAnExpenseTypeToAddAndExpenseTypeNotExists_whenAdd_thenReturnAddedExpenseType() {
 	expectedExpenseType := models.NewExpenseType("Servicios")
-	suite.repositoryMock.MockGetByName([]interface{}{expectedExpenseType.Name}, []interface{}{nil, nil}, 1)
+	suite.repositoryMock.MockGetByName([]interface{}{expectedExpenseType.Name()}, []interface{}{nil, nil}, 1)
 	suite.repositoryMock.MockAdd([]interface{}{expectedExpenseType}, []interface{}{expectedExpenseType, nil}, 1)
 
 	addedExpenseType, err := suite.service.Add(suite.buildAddCommandFromExpenseType(expectedExpenseType))
@@ -76,7 +77,7 @@ func (suite *ServiceTestSuite) TestGivenAnExpenseTypeToAddAndExpenseTypeNotExist
 
 func (suite *ServiceTestSuite) TestGivenThatExpenseTypeAlreadyExists_whenAdd_thenReturnAddedExpenseType() {
 	expectedExpenseType := models.NewExpenseType("Servicios")
-	suite.repositoryMock.MockGetByName([]interface{}{expectedExpenseType.Name}, []interface{}{expectedExpenseType, nil}, 1)
+	suite.repositoryMock.MockGetByName([]interface{}{expectedExpenseType.Name()}, []interface{}{expectedExpenseType, nil}, 1)
 
 	addedExpenseType, err := suite.service.Add(suite.buildAddCommandFromExpenseType(expectedExpenseType))
 
@@ -87,37 +88,37 @@ func (suite *ServiceTestSuite) TestGivenThatExpenseTypeAlreadyExists_whenAdd_the
 
 func (suite *ServiceTestSuite) TestGivenThatRepositoryFailsGivingExpenseTypeByName_whenAdd_thenReturnError() {
 	expectedExpenseType := models.NewExpenseType("Servicios")
-	suite.repositoryMock.MockGetByName([]interface{}{expectedExpenseType.Name}, []interface{}{nil, errors.New("fail")}, 1)
+	suite.repositoryMock.MockGetByName([]interface{}{expectedExpenseType.Name()}, []interface{}{nil, errors.New("fail")}, 1)
 
 	_, err := suite.service.Add(suite.buildAddCommandFromExpenseType(expectedExpenseType))
 
-	require.ErrorAs(suite.T(), err, &UnexpectedError{})
+	require.ErrorAs(suite.T(), err, &expensetype.UnexpectedError{})
 	suite.repositoryMock.AssertExpectations(suite.T())
 }
 
 func (suite *ServiceTestSuite) TestGivenThatRepositoryFailsAddingExpenseType_whenAdd_thenReturnError() {
 	expectedExpenseType := models.NewExpenseType("Servicios")
-	suite.repositoryMock.MockGetByName([]interface{}{expectedExpenseType.Name}, []interface{}{nil, nil}, 1)
+	suite.repositoryMock.MockGetByName([]interface{}{expectedExpenseType.Name()}, []interface{}{nil, nil}, 1)
 	suite.repositoryMock.MockAdd([]interface{}{expectedExpenseType}, []interface{}{nil, errors.New("fail")}, 1)
 
 	_, err := suite.service.Add(suite.buildAddCommandFromExpenseType(expectedExpenseType))
 
-	require.ErrorAs(suite.T(), err, &UnexpectedError{})
+	require.ErrorAs(suite.T(), err, &expensetype.UnexpectedError{})
 	suite.repositoryMock.AssertExpectations(suite.T())
 }
 
 func (suite *ServiceTestSuite) TestGetAll_Success() {
-	expectedExpenseTypes := []*models.ExpenseType{{Id: uuid.New(), Name: "Food"}, {Id: uuid.New(), Name: "Travel"}}
+	expectedExpenseTypes := []*models.ExpenseType{models.NewExpenseType("Food"), models.NewExpenseType("Travel")}
 	suite.repositoryMock.MockGetAll([]interface{}{}, []interface{}{expectedExpenseTypes, nil}, 1)
 
 	actualExpenseTypes, err := suite.service.GetAll()
 
 	assert.Nil(suite.T(), err)
 	assert.Len(suite.T(), actualExpenseTypes, 2)
-	assert.Equal(suite.T(), actualExpenseTypes[0].Id, expectedExpenseTypes[0].Id)
-	assert.Equal(suite.T(), actualExpenseTypes[0].Name, expectedExpenseTypes[0].Name)
-	assert.Equal(suite.T(), actualExpenseTypes[1].Id, expectedExpenseTypes[1].Id)
-	assert.Equal(suite.T(), actualExpenseTypes[1].Name, expectedExpenseTypes[1].Name)
+	assert.Equal(suite.T(), actualExpenseTypes[0].Id(), expectedExpenseTypes[0].Id())
+	assert.Equal(suite.T(), actualExpenseTypes[0].Name(), expectedExpenseTypes[0].Name())
+	assert.Equal(suite.T(), actualExpenseTypes[1].Id(), expectedExpenseTypes[1].Id())
+	assert.Equal(suite.T(), actualExpenseTypes[1].Name(), expectedExpenseTypes[1].Name())
 }
 
 func (suite *ServiceTestSuite) TestGivenThatRepositoryFails_whenGetAll_thenReturnError() {
@@ -126,15 +127,16 @@ func (suite *ServiceTestSuite) TestGivenThatRepositoryFails_whenGetAll_thenRetur
 	expenseTypes, err := suite.service.GetAll()
 
 	assert.NotNil(suite.T(), err)
-	assert.ErrorAs(suite.T(), err, &UnexpectedError{})
+	assert.ErrorAs(suite.T(), err, &expensetype.UnexpectedError{})
 	assert.Nil(suite.T(), expenseTypes)
 }
 
 func (suite *ServiceTestSuite) assertEqualsExpenseType(expected *models.ExpenseType, actual *models.ExpenseType) {
-	require.Equal(suite.T(), expected.Id, actual.Id)
-	require.Equal(suite.T(), expected.Name, actual.Name)
+	require.Equal(suite.T(), expected.Id(), actual.Id())
+	require.Equal(suite.T(), expected.Name(), actual.Name())
 }
 
-func (suite *ServiceTestSuite) buildAddCommandFromExpenseType(expenseType *models.ExpenseType) *AddCommand {
-	return &AddCommand{name: expenseType.Name}
+func (suite *ServiceTestSuite) buildAddCommandFromExpenseType(expenseType *models.ExpenseType) *expensetype.AddCommand {
+	command, _ := expensetype.NewAddCommand(expenseType.Name())
+	return command
 }
