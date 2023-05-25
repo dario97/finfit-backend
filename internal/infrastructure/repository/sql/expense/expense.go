@@ -21,5 +21,5 @@ type Expense struct {
 
 func (receiver Expense) MapToDomainExpense() *models.Expense {
 	id, _ := uuid.Parse(receiver.ID)
-	return models.NewExpenseWithId(id, receiver.Amount, receiver.Currency, receiver.ExpenseDate, receiver.Description, receiver.ExpenseType.MapToDomainExpenseType())
+	return models.NewExpenseWithId(id, models.NewMoney(receiver.Amount, receiver.Currency), receiver.ExpenseDate, receiver.Description, receiver.ExpenseType.MapToDomainExpenseType())
 }
