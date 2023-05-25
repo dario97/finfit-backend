@@ -31,6 +31,7 @@ services:
       - DATABASE_HOST=${DB_HOST}
     ports:
       - '5432:5432'
+    command: [ "postgres", "-c", "wal_level=logical" ]
     volumes:
       - app_data:/var/lib/postgresql/database
     networks:
