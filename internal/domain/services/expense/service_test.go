@@ -150,13 +150,13 @@ func (suite *ExpenseServiceTestSuite) TestGivenThatRepositoryFails_WhenSearchInP
 
 func (suite *ExpenseServiceTestSuite) getExpenses() []*models.Expense {
 	return []*models.Expense{
-		models.NewExpense(10.3, "ARS", time.Date(2022, 5, 28, 0, 0, 0, 0, time.Local), "Lomitos", models.NewExpenseType("Servicios")),
-		models.NewExpense(10.3, "ARS", time.Date(2022, 7, 28, 0, 0, 0, 0, time.Local), "Lomitos", models.NewExpenseType("Servicios")),
+		models.NewExpense(models.NewMoney(10.3, "ARS"), time.Date(2022, 5, 28, 0, 0, 0, 0, time.Local), "Lomitos", models.NewExpenseType("Servicios")),
+		models.NewExpense(models.NewMoney(10.3, "ARS"), time.Date(2022, 7, 28, 0, 0, 0, 0, time.Local), "Lomitos", models.NewExpenseType("Servicios")),
 	}
 }
 
 func getExpense() *models.Expense {
-	return models.NewExpense(100.50, "ARS", time.Date(2022, 1, 1, 10, 0, 0, 0, time.UTC), "Lomitos", getExpenseType())
+	return models.NewExpense(models.NewMoney(100.50, "ARS"), time.Date(2022, 1, 1, 10, 0, 0, 0, time.UTC), "Lomitos", getExpenseType())
 }
 
 func getExpenseType() *models.ExpenseType {
@@ -172,6 +172,6 @@ func assertEqualsExpense(t *testing.T, expected *models.Expense, actual *models.
 }
 
 func buildAddCommandFromExpense(domainExpense *models.Expense) *expense.AddCommand {
-	addCommand, _ := expense.NewAddCommand(domainExpense.Amount(), domainExpense.Currency(), domainExpense.ExpenseDate(), domainExpense.Description(), domainExpense.ExpenseType().Id())
+	addCommand, _ := expense.NewAddCommand(domainExpense.Amount().Amount(), domainExpense.Amount().Currency(), domainExpense.ExpenseDate(), domainExpense.Description(), domainExpense.ExpenseType().Id())
 	return addCommand
 }

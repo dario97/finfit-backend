@@ -94,7 +94,7 @@ func (h handler) mapAddCommandFromRequestBody(body AddExpenseRequest) (*expense.
 		return nil, err
 	}
 
-	return expense.NewAddCommand(body.Amount, body.Currency, date, body.Description, expenseTypeId)
+	return expense.NewAddCommand(body.Amount.Amount, body.Amount.Currency, date, body.Description, expenseTypeId)
 }
 
 func (h handler) mapSearchCommandFromRequestBody(params SearchInPeriodQueryParams) (*expense.SearchInPeriodCommand, error) {
@@ -105,16 +105,7 @@ func (h handler) mapSearchCommandFromRequestBody(params SearchInPeriodQueryParam
 }
 
 func (h handler) mapCreatedExpenseToExpenseResponse(expense *models.Expense) Response {
-	return Response{Expense: Body{
-		ID:          expense.Id().String(),
-		Amount:      expense.Amount(),
-		ExpenseDate: expense.ExpenseDate().Format(DateFormat),
-		Description: expense.Description(),
-		ExpenseType: TypeBody{
-			ID:   expense.ExpenseType().Id().String(),
-			Name: expense.ExpenseType().Name(),
-		},
-	}}
+	return Response{Expense: h.mapExpenseToExpenseBody(expense)}
 }
 
 func (h handler) manageServiceError(ctx echo.Context, err error) error {
@@ -141,8 +132,11 @@ func (h handler) mapExpensesToSearchResponse(expenses []*models.Expense) SearchR
 
 func (h handler) mapExpenseToExpenseBody(expense *models.Expense) Body {
 	return Body{
-		ID:          expense.Id().String(),
-		Amount:      expense.Amount(),
+		ID: expense.Id().String(),
+		Amount: Money{
+			Amount:   expense.Amount().Amount(),
+			Currency: expense.Amount().Currency(),
+		},
 		ExpenseDate: expense.ExpenseDate().Format(DateFormat),
 		Description: expense.Description(),
 		ExpenseType: TypeBody{
@@ -153,11 +147,10 @@ func (h handler) mapExpenseToExpenseBody(expense *models.Expense) Body {
 }
 
 type AddExpenseRequest struct {
-	Amount      float64                           `json:"amount,omitempty" validate:"required,gt=0"`
+	Amount      Money                             `json:"amount,omitempty"`
 	ExpenseDate string                            `json:"expense_date,omitempty" validate:"required,datetime=2006-01-02"`
 	Description string                            `json:"description,omitempty"`
 	ExpenseType *AddExpenseRequestExpenseTypeBody `json:"expense_type,omitempty" validate:"required"`
-	Currency    string                            `json:"currency" validate:"iso4217"`
 }
 
 type AddExpenseRequestExpenseTypeBody struct {
@@ -179,7 +172,7 @@ type SearchResponse struct {
 
 type Body struct {
 	ID          string   `json:"id"`
-	Amount      float64  `json:"amount"`
+	Amount      Money    `json:"amount"`
 	ExpenseDate string   `json:"expense_date"`
 	Description string   `json:"description"`
 	ExpenseType TypeBody `json:"expense_type"`
@@ -188,4 +181,9 @@ type Body struct {
 type TypeBody struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
+}
+
+type Money struct {
+	Amount   float64 `json:"amount" validate:"required,gt=0"`
+	Currency string  `json:"currency" validate:"iso4217"`
 }
