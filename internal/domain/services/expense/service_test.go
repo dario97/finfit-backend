@@ -148,11 +148,25 @@ func (suite *ExpenseServiceTestSuite) TestGivenThatRepositoryFails_WhenSearchInP
 	require.Nil(suite.T(), actualExpenses)
 }
 
+func (suite *ExpenseServiceTestSuite) TestGivenExpensesToAdd_WhenAddAll_ThenReturnCreatedExpenses() {
+	expensesToAdd := suite.getExpenses()
+	expectedAddedExpenses := expensesToAdd
+
+	actualCreatedExpense, err := suite.service.AddAll(suite.buildAddAllCommandFromExpenses(expensesToAdd))
+
+	assert.Nil(suite.T(), err, "Error must to be nil")
+	assertEqualsExpense(suite.T(), expectedAddedExpenses, actualCreatedExpense)
+}
+
 func (suite *ExpenseServiceTestSuite) getExpenses() []*models.Expense {
 	return []*models.Expense{
 		models.NewExpense(models.NewMoney(10.3, "ARS"), time.Date(2022, 5, 28, 0, 0, 0, 0, time.Local), "Lomitos", models.NewExpenseType("Servicios")),
 		models.NewExpense(models.NewMoney(10.3, "ARS"), time.Date(2022, 7, 28, 0, 0, 0, 0, time.Local), "Lomitos", models.NewExpenseType("Servicios")),
 	}
+}
+
+func (suite *ExpenseServiceTestSuite) buildAddAllCommandFromExpenses(add []*models.Expense) *expense.AddAllCommand {
+
 }
 
 func getExpense() *models.Expense {

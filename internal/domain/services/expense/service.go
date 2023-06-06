@@ -15,6 +15,7 @@ type Repository interface {
 
 type Service interface {
 	Add(command *AddCommand) (*models.Expense, error)
+	AddAll(command *AddAllCommand) ([]*models.Expense, error)
 	SearchInPeriod(command *SearchInPeriodCommand) ([]*models.Expense, error)
 }
 
@@ -55,6 +56,10 @@ func (s service) SearchInPeriod(command *SearchInPeriodCommand) ([]*models.Expen
 		return nil, UnexpectedError{Msg: err.Error()}
 	}
 	return expenses, nil
+}
+
+func (s service) AddAll(command *AddAllCommand) ([]*models.Expense, error) {
+
 }
 
 type UnexpectedError struct {
