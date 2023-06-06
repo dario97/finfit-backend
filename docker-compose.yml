@@ -36,6 +36,20 @@ services:
       - app_data:/var/lib/postgresql/database
     networks:
       - application
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:21.1.1
+    container_name: keycloak
+    environment:
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN_USER}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+    command:
+      - start-dev
+    ports:
+      - '8090:8080'
+    networks:
+      - application
+
 volumes:
   app_data:
 
