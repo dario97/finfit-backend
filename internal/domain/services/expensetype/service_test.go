@@ -44,7 +44,7 @@ func TestServiceTestSuite(t *testing.T) {
 }
 
 func (suite *ServiceTestSuite) TestGivenAnID_whenGetById_thenReturnExpenseType() {
-	expectedExpenseType := models.NewExpenseType("Servicios")
+	expectedExpenseType, _ := models.NewExpenseType("Servicios")
 	suite.repositoryMock.MockGetByID([]interface{}{expectedExpenseType.Id()}, []interface{}{expectedExpenseType, nil}, 1)
 
 	actualExpenseType, err := suite.service.GetById(expectedExpenseType.Id())
@@ -64,7 +64,7 @@ func (suite *ServiceTestSuite) TestGivenThatRepositoryFails_whenGetById_thenRetu
 }
 
 func (suite *ServiceTestSuite) TestGivenAnExpenseTypeToAddAndExpenseTypeNotExists_whenAdd_thenReturnAddedExpenseType() {
-	expectedExpenseType := models.NewExpenseType("Servicios")
+	expectedExpenseType, _ := models.NewExpenseType("Servicios")
 	suite.repositoryMock.MockGetByName([]interface{}{expectedExpenseType.Name()}, []interface{}{nil, nil}, 1)
 	suite.repositoryMock.MockAdd([]interface{}{expectedExpenseType}, []interface{}{expectedExpenseType, nil}, 1)
 
@@ -76,7 +76,7 @@ func (suite *ServiceTestSuite) TestGivenAnExpenseTypeToAddAndExpenseTypeNotExist
 }
 
 func (suite *ServiceTestSuite) TestGivenThatExpenseTypeAlreadyExists_whenAdd_thenReturnAddedExpenseType() {
-	expectedExpenseType := models.NewExpenseType("Servicios")
+	expectedExpenseType, _ := models.NewExpenseType("Servicios")
 	suite.repositoryMock.MockGetByName([]interface{}{expectedExpenseType.Name()}, []interface{}{expectedExpenseType, nil}, 1)
 
 	addedExpenseType, err := suite.service.Add(suite.buildAddCommandFromExpenseType(expectedExpenseType))
@@ -87,7 +87,7 @@ func (suite *ServiceTestSuite) TestGivenThatExpenseTypeAlreadyExists_whenAdd_the
 }
 
 func (suite *ServiceTestSuite) TestGivenThatRepositoryFailsGivingExpenseTypeByName_whenAdd_thenReturnError() {
-	expectedExpenseType := models.NewExpenseType("Servicios")
+	expectedExpenseType, _ := models.NewExpenseType("Servicios")
 	suite.repositoryMock.MockGetByName([]interface{}{expectedExpenseType.Name()}, []interface{}{nil, errors.New("fail")}, 1)
 
 	_, err := suite.service.Add(suite.buildAddCommandFromExpenseType(expectedExpenseType))
@@ -97,7 +97,7 @@ func (suite *ServiceTestSuite) TestGivenThatRepositoryFailsGivingExpenseTypeByNa
 }
 
 func (suite *ServiceTestSuite) TestGivenThatRepositoryFailsAddingExpenseType_whenAdd_thenReturnError() {
-	expectedExpenseType := models.NewExpenseType("Servicios")
+	expectedExpenseType, _ := models.NewExpenseType("Servicios")
 	suite.repositoryMock.MockGetByName([]interface{}{expectedExpenseType.Name()}, []interface{}{nil, nil}, 1)
 	suite.repositoryMock.MockAdd([]interface{}{expectedExpenseType}, []interface{}{nil, errors.New("fail")}, 1)
 
@@ -108,7 +108,7 @@ func (suite *ServiceTestSuite) TestGivenThatRepositoryFailsAddingExpenseType_whe
 }
 
 func (suite *ServiceTestSuite) TestGetAll_Success() {
-	expectedExpenseTypes := []*models.ExpenseType{models.NewExpenseType("Food"), models.NewExpenseType("Travel")}
+	expectedExpenseTypes := suite.getExpenseTypes()
 	suite.repositoryMock.MockGetAll([]interface{}{}, []interface{}{expectedExpenseTypes, nil}, 1)
 
 	actualExpenseTypes, err := suite.service.GetAll()
@@ -119,6 +119,20 @@ func (suite *ServiceTestSuite) TestGetAll_Success() {
 	assert.Equal(suite.T(), actualExpenseTypes[0].Name(), expectedExpenseTypes[0].Name())
 	assert.Equal(suite.T(), actualExpenseTypes[1].Id(), expectedExpenseTypes[1].Id())
 	assert.Equal(suite.T(), actualExpenseTypes[1].Name(), expectedExpenseTypes[1].Name())
+}
+
+func (suite *ServiceTestSuite) getExpenseTypes() []*models.ExpenseType {
+	return []*models.ExpenseType{suite.getExpenseType1(), suite.getExpenseType2()}
+}
+
+func (suite *ServiceTestSuite) getExpenseType1() *models.ExpenseType {
+	expenseType, _ := models.NewExpenseType("Food")
+	return expenseType
+}
+
+func (suite *ServiceTestSuite) getExpenseType2() *models.ExpenseType {
+	expenseType, _ := models.NewExpenseType("Travel")
+	return expenseType
 }
 
 func (suite *ServiceTestSuite) TestGivenThatRepositoryFails_whenGetAll_thenReturnError() {

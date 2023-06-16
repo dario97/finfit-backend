@@ -29,7 +29,7 @@ func NewService(expenseRepository Repository, expenseTypeService expensetype.Ser
 }
 
 func (s service) Add(command *AddCommand) (*models.Expense, error) {
-	expenseType, expenseTypeServiceError := s.expenseTypeService.GetById(command.expenseTypeId)
+	expenseType, expenseTypeServiceError := s.checkIfExpenseTypeExists(command)
 
 	if expenseTypeServiceError != nil {
 		return nil, UnexpectedError{Msg: expenseTypeServiceError.Error()}
@@ -39,7 +39,10 @@ func (s service) Add(command *AddCommand) (*models.Expense, error) {
 		return nil, InvalidExpenseTypeError{Msg: invalidExpenseTypeErrorMsg}
 	}
 
-	expenseToCreate := models.NewExpense(models.NewMoney(command.amount, command.currency), command.expenseDate, command.description, expenseType)
+	expenseToCreate, err := s.mapAddCommandToExpense(command, expenseType)
+	if err != nil {
+		return nil, InvalidDomainModelError{Msg: err.Error()}
+	}
 
 	createdExpense, repoError := s.repository.Add(expenseToCreate)
 
@@ -48,6 +51,10 @@ func (s service) Add(command *AddCommand) (*models.Expense, error) {
 	}
 
 	return createdExpense, nil
+}
+
+func (s service) checkIfExpenseTypeExists(command *AddCommand) (*models.ExpenseType, error) {
+	return s.expenseTypeService.GetById(command.expenseTypeId)
 }
 
 func (s service) SearchInPeriod(command *SearchInPeriodCommand) ([]*models.Expense, error) {
@@ -60,6 +67,19 @@ func (s service) SearchInPeriod(command *SearchInPeriodCommand) ([]*models.Expen
 
 func (s service) AddAll(command *AddAllCommand) ([]*models.Expense, error) {
 
+}
+
+func (s service) mapAddCommandToExpense(command *AddCommand, expenseType *models.ExpenseType) (*models.Expense, error) {
+	money, err := models.NewMoney(command.amount, command.currency)
+	if err != nil {
+		return nil, err
+	}
+	expenseToCreate, err := models.NewExpense(money, command.expenseDate, command.description, expenseType)
+	if err != nil {
+		return nil, err
+	}
+
+	return expenseToCreate, err
 }
 
 type UnexpectedError struct {
@@ -75,5 +95,13 @@ type InvalidExpenseTypeError struct {
 }
 
 func (receiver InvalidExpenseTypeError) Error() string {
+	return receiver.Msg
+}
+
+type InvalidDomainModelError struct {
+	Msg string
+}
+
+func (receiver InvalidDomainModelError) Error() string {
 	return receiver.Msg
 }

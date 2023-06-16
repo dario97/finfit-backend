@@ -19,7 +19,16 @@ type Expense struct {
 	ExpenseType   expensetype.ExpenseType
 }
 
-func (receiver Expense) MapToDomainExpense() *models.Expense {
+func (receiver Expense) MapToDomainExpense() (*models.Expense, error) {
 	id, _ := uuid.Parse(receiver.ID)
-	return models.NewExpenseWithId(id, models.NewMoney(receiver.Amount, receiver.Currency), receiver.ExpenseDate, receiver.Description, receiver.ExpenseType.MapToDomainExpenseType())
+	money, err := models.NewMoney(receiver.Amount, receiver.Currency)
+	if err != nil {
+		return nil, err
+	}
+	expenseType, err := receiver.ExpenseType.MapToDomainExpenseType()
+	if err != nil {
+		return nil, err
+	}
+
+	return models.NewExpenseWithId(id, money, receiver.ExpenseDate, receiver.Description, expenseType)
 }

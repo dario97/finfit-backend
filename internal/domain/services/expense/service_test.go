@@ -49,7 +49,7 @@ func TestServiceTestSuite(t *testing.T) {
 }
 
 func (suite *ExpenseServiceTestSuite) TestGivenAnExpense_WhenAdd_ThenReturnCreatedExpense() {
-	expenseToCreate := getExpense()
+	expenseToCreate := suite.getExpense1()
 	expectedCreatedExpense := expenseToCreate
 
 	suite.expenseRepositoryMock.MockAdd([]interface{}{expenseToCreate}, []interface{}{expectedCreatedExpense, nil}, 1)
@@ -62,7 +62,7 @@ func (suite *ExpenseServiceTestSuite) TestGivenAnExpense_WhenAdd_ThenReturnCreat
 }
 
 func (suite *ExpenseServiceTestSuite) TestGivenThatFailToGetExpenseType_WhenAdd_ThenReturnError() {
-	expenseToCreate := getExpense()
+	expenseToCreate := suite.getExpense1()
 
 	expenseTypeServiceError := errors.New("fail to get expense type")
 	expectedError := expense.UnexpectedError{
@@ -79,8 +79,7 @@ func (suite *ExpenseServiceTestSuite) TestGivenThatFailToGetExpenseType_WhenAdd_
 }
 
 func (suite *ExpenseServiceTestSuite) TestGivenThatExpenseTypeNotExists_WhenAdd_ThenReturnError() {
-	expenseToCreate := getExpense()
-
+	expenseToCreate := suite.getExpense1()
 	expectedError := expense.InvalidExpenseTypeError{
 		Msg: "the expense type doesn't exists",
 	}
@@ -95,7 +94,7 @@ func (suite *ExpenseServiceTestSuite) TestGivenThatExpenseTypeNotExists_WhenAdd_
 }
 
 func (suite *ExpenseServiceTestSuite) TestGivenThatSaveExpenseIntoDatabaseFails_WhenAdd_ThenReturnError() {
-	expenseToCreate := getExpense()
+	expenseToCreate := suite.getExpense1()
 
 	repoError := errors.New("fail to save expense")
 	expectedError := expense.UnexpectedError{
@@ -159,22 +158,37 @@ func (suite *ExpenseServiceTestSuite) TestGivenExpensesToAdd_WhenAddAll_ThenRetu
 }
 
 func (suite *ExpenseServiceTestSuite) getExpenses() []*models.Expense {
+	expense1 := suite.getExpense1()
+	expense2 := suite.getExpense2()
+
 	return []*models.Expense{
-		models.NewExpense(models.NewMoney(10.3, "ARS"), time.Date(2022, 5, 28, 0, 0, 0, 0, time.Local), "Lomitos", models.NewExpenseType("Servicios")),
-		models.NewExpense(models.NewMoney(10.3, "ARS"), time.Date(2022, 7, 28, 0, 0, 0, 0, time.Local), "Lomitos", models.NewExpenseType("Servicios")),
+		expense1,
+		expense2,
 	}
+}
+
+func (suite *ExpenseServiceTestSuite) getExpense1() *models.Expense {
+	newExpense, _ := models.NewExpense(suite.getMoney(), time.Date(2022, 5, 28, 0, 0, 0, 0, time.Local), "Lomitos", suite.getExpenseType())
+	return newExpense
+}
+
+func (suite *ExpenseServiceTestSuite) getExpense2() *models.Expense {
+	newExpense, _ := models.NewExpense(suite.getMoney(), time.Date(2022, 7, 28, 0, 0, 0, 0, time.Local), "Lomitos", suite.getExpenseType())
+	return newExpense
 }
 
 func (suite *ExpenseServiceTestSuite) buildAddAllCommandFromExpenses(add []*models.Expense) *expense.AddAllCommand {
 
 }
 
-func getExpense() *models.Expense {
-	return models.NewExpense(models.NewMoney(100.50, "ARS"), time.Date(2022, 1, 1, 10, 0, 0, 0, time.UTC), "Lomitos", getExpenseType())
+func (suite *ExpenseServiceTestSuite) getExpenseType() *models.ExpenseType {
+	expenseType, _ := models.NewExpenseType("Delivery")
+	return expenseType
 }
 
-func getExpenseType() *models.ExpenseType {
-	return models.NewExpenseType("Delivery")
+func (suite *ExpenseServiceTestSuite) getMoney() *models.Money {
+	money, _ := models.NewMoney(10.3, "ARS")
+	return money
 }
 
 func assertEqualsExpense(t *testing.T, expected *models.Expense, actual *models.Expense) {
