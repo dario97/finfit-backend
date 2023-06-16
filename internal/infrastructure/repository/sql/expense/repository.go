@@ -47,7 +47,11 @@ func (r repository) SearchInPeriod(startDate time.Time, endDate time.Time) ([]*m
 
 	expenses := []*models.Expense{}
 	for _, expense := range storedExpenses {
-		expenses = append(expenses, expense.MapToDomainExpense())
+		domainExpense, err := expense.MapToDomainExpense()
+		if err != nil {
+			return nil, err
+		}
+		expenses = append(expenses, domainExpense)
 	}
 
 	return expenses, nil

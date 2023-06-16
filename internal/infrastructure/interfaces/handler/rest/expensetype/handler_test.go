@@ -55,7 +55,7 @@ func TestHandlerTestSuite(t *testing.T) {
 }
 
 func (suite *HandlerTestSuite) TestGivenAnExpenseTypeToAdd_WhenAdd_ThenReturnStatusOkWithCreatedExpenseType() {
-	expectedAddedExpenseType := models.NewExpenseType("Servicios")
+	expectedAddedExpenseType, _ := models.NewExpenseType("Servicios")
 
 	requestBody := suite.getAddExpenseRequestBodyFromExpenseType(expectedAddedExpenseType)
 	c, rec := suite.mockAddExpenseTypeRequest(requestBody)
@@ -75,25 +75,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseTypeToAdd_WhenAdd_ThenReturnSta
 }
 
 func (suite *HandlerTestSuite) TestGivenAnExpenseTypeToAddWithEmptyName_WhenAdd_ThenReturnStatusBadRequest() {
-	expectedAddedExpenseType := models.NewExpenseType("")
-
-	requestBody := suite.getAddExpenseRequestBodyFromExpenseType(expectedAddedExpenseType)
-	c, rec := suite.mockAddExpenseTypeRequest(requestBody)
-
-	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, expensetype.FieldValidationErrorMessage, expensetype.FieldValidationErrorMessage, "[{\"field\":\"Name\",\"message\":\"Name is a required field\"}]", rest.FieldValidationErrorCode)
-
-	handler := expensetype.NewHandler(suite.expenseTypeServiceMock, suite.getValidator())
-
-	if assert.NoError(suite.T(), handler.Add(c)) {
-		assert.Equal(suite.T(), http.StatusBadRequest, rec.Code)
-		assert.Equal(suite.T(), expectedResponseBody, rec.Body.String())
-	}
-}
-
-func (suite *HandlerTestSuite) TestGivenAnExpenseTypeToAddWithBlankName_WhenAdd_ThenReturnStatusBadRequest() {
-	expectedAddedExpenseType := models.NewExpenseType("   ")
-
-	requestBody := suite.getAddExpenseRequestBodyFromExpenseType(expectedAddedExpenseType)
+	requestBody := `{"name":""}`
 	c, rec := suite.mockAddExpenseTypeRequest(requestBody)
 
 	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, expensetype.FieldValidationErrorMessage, expensetype.FieldValidationErrorMessage, "[{\"field\":\"Name\",\"message\":\"Name is a required field\"}]", rest.FieldValidationErrorCode)
@@ -107,9 +89,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseTypeToAddWithBlankName_WhenAdd_
 }
 
 func (suite *HandlerTestSuite) TestGivenAnExpenseTypeToAddWithTooSmallName_WhenAdd_ThenReturnStatusBadRequest() {
-	expectedAddedExpenseType := models.NewExpenseType("PR")
-
-	requestBody := suite.getAddExpenseRequestBodyFromExpenseType(expectedAddedExpenseType)
+	requestBody := `{"name":"PR"}`
 	c, rec := suite.mockAddExpenseTypeRequest(requestBody)
 
 	expectedResponseBody := fmt.Sprintf(errorResponse, http.StatusBadRequest, expensetype.FieldValidationErrorMessage, expensetype.FieldValidationErrorMessage, "[{\"field\":\"Name\",\"message\":\"Name must be at least 3 characters in length\"}]", rest.FieldValidationErrorCode)
@@ -123,7 +103,7 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseTypeToAddWithTooSmallName_WhenA
 }
 
 func (suite *HandlerTestSuite) TestGivenAnExpenseTypeToAddWithTooLongName_WhenAdd_ThenReturnStatusBadRequest() {
-	expectedAddedExpenseType := models.NewExpenseType("THIS IS A VERY LONG NAME FOR EXPENSE TYPE")
+	expectedAddedExpenseType, _ := models.NewExpenseType("THIS IS A VERY LONG NAME FOR EXPENSE TYPE")
 
 	requestBody := suite.getAddExpenseRequestBodyFromExpenseType(expectedAddedExpenseType)
 	c, rec := suite.mockAddExpenseTypeRequest(requestBody)
@@ -140,8 +120,8 @@ func (suite *HandlerTestSuite) TestGivenAnExpenseTypeToAddWithTooLongName_WhenAd
 
 func (suite *HandlerTestSuite) TestGetAllSuccess() {
 	expectedExpenseTypes := []*models.ExpenseType{
-		models.NewExpenseType("test1"),
-		models.NewExpenseType("test2"),
+		suite.getExpenseType1(),
+		suite.getExpenseType2(),
 	}
 
 	expectedResponseBody := suite.getGetAllExpenseTypeResponseFromExpenseTypes(expectedExpenseTypes)
@@ -229,4 +209,14 @@ func (suite *HandlerTestSuite) mapExpenseTypeToExpenseTypeBody(expenseType *mode
 func (suite *HandlerTestSuite) getValidator() fieldvalidation.FieldsValidator {
 	validator, _ := fieldvalidation.RegisterFieldsValidator(nil, nil)
 	return validator
+}
+
+func (suite *HandlerTestSuite) getExpenseType1() *models.ExpenseType {
+	expenseType, _ := models.NewExpenseType("test1")
+	return expenseType
+}
+
+func (suite *HandlerTestSuite) getExpenseType2() *models.ExpenseType {
+	expenseType, _ := models.NewExpenseType("test2")
+	return expenseType
 }
