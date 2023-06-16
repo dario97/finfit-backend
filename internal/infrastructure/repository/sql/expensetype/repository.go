@@ -29,7 +29,7 @@ func (r repository) GetByID(id uuid.UUID) (*models.ExpenseType, error) {
 		return nil, err
 	}
 
-	return storedExpenseType.MapToDomainExpenseType(), nil
+	return storedExpenseType.MapToDomainExpenseType()
 }
 
 func (r repository) GetByName(name string) (*models.ExpenseType, error) {
@@ -44,7 +44,7 @@ func (r repository) GetByName(name string) (*models.ExpenseType, error) {
 		return nil, err
 	}
 
-	return storedExpenseType.MapToDomainExpenseType(), nil
+	return storedExpenseType.MapToDomainExpenseType()
 }
 
 func (r repository) Add(expenseType *models.ExpenseType) (*models.ExpenseType, error) {

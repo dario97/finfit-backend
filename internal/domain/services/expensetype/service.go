@@ -45,7 +45,11 @@ func (s service) Add(command *AddCommand) (*models.ExpenseType, error) {
 		return storedExpenseType, nil
 	}
 
-	expenseTypeToAdd := mapExpenseTypeFromAddCommand(command)
+	expenseTypeToAdd, err := mapExpenseTypeFromAddCommand(command)
+	if err != nil {
+		return nil, InvalidDomainModelError{Msg: err.Error()}
+	}
+
 	addedExpenseType, err := s.repo.Add(expenseTypeToAdd)
 	if err != nil {
 		return nil, UnexpectedError{Msg: err.Error()}
@@ -63,7 +67,7 @@ func (s service) GetAll() ([]*models.ExpenseType, error) {
 	return expenseTypes, nil
 }
 
-func mapExpenseTypeFromAddCommand(command *AddCommand) *models.ExpenseType {
+func mapExpenseTypeFromAddCommand(command *AddCommand) (*models.ExpenseType, error) {
 	return models.NewExpenseType(command.name)
 }
 
@@ -72,5 +76,13 @@ type UnexpectedError struct {
 }
 
 func (receiver UnexpectedError) Error() string {
+	return receiver.Msg
+}
+
+type InvalidDomainModelError struct {
+	Msg string
+}
+
+func (receiver InvalidDomainModelError) Error() string {
 	return receiver.Msg
 }

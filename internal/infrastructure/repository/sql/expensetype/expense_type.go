@@ -13,7 +13,7 @@ type ExpenseType struct {
 	UpdatedAt time.Time `gorm:"column:updated_at"`
 }
 
-func (receiver ExpenseType) MapToDomainExpenseType() *models.ExpenseType {
+func (receiver ExpenseType) MapToDomainExpenseType() (*models.ExpenseType, error) {
 	id, _ := uuid.Parse(receiver.ID)
 	return models.NewExpenseTypeWithId(id, receiver.Name)
 }
