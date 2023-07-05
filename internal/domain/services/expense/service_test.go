@@ -151,10 +151,24 @@ func (suite *ExpenseServiceTestSuite) TestGivenExpensesToAdd_WhenAddAll_ThenRetu
 	expensesToAdd := suite.getExpenses()
 	expectedAddedExpenses := expensesToAdd
 
-	actualCreatedExpense, err := suite.service.AddAll(suite.buildAddAllCommandFromExpenses(expensesToAdd))
+	actualCreatedExpenses, err := suite.service.AddAll(suite.buildAddAllCommandFromExpenses(expensesToAdd))
 
-	assert.Nil(suite.T(), err, "Error must to be nil")
-	assertEqualsExpense(suite.T(), expectedAddedExpenses, actualCreatedExpense)
+	require.NoError(suite.T(), err, "Error must to be nil")
+	suite.assertEqualsExpenses(expectedAddedExpenses, actualCreatedExpenses)
+}
+
+func (suite *ExpenseServiceTestSuite) TestGivenRepositoryFails_WhenAddAll_ThenReturnUnexpectedError() {
+	actualCreatedExpenses, err := suite.service.AddAll(suite.buildAddAllCommandFromExpenses(suite.getExpenses()))
+
+	require.ErrorAs(suite.T(), err, &expense.UnexpectedError{})
+	require.Nil(suite.T(), actualCreatedExpenses)
+}
+
+func (suite *ExpenseServiceTestSuite) assertEqualsExpenses(expectedAddedExpenses []*models.Expense, actualCreatedExpenses []*models.Expense) {
+	assert.Equal(suite.T(), len(expectedAddedExpenses), len(actualCreatedExpenses))
+	for i, expectedExpense := range expectedAddedExpenses {
+		assertEqualsExpense(suite.T(), expectedExpense, actualCreatedExpenses[i])
+	}
 }
 
 func (suite *ExpenseServiceTestSuite) getExpenses() []*models.Expense {
@@ -177,8 +191,14 @@ func (suite *ExpenseServiceTestSuite) getExpense2() *models.Expense {
 	return newExpense
 }
 
-func (suite *ExpenseServiceTestSuite) buildAddAllCommandFromExpenses(add []*models.Expense) *expense.AddAllCommand {
+func (suite *ExpenseServiceTestSuite) buildAddAllCommandFromExpenses(expenses []*models.Expense) *expense.AddAllCommand {
+	addCommands := []*expense.AddCommand{}
+	for _, domainExpense := range expenses {
+		addCommands = append(addCommands, buildAddCommandFromExpense(domainExpense))
+	}
 
+	command, _ := expense.NewAddAllCommand(addCommands)
+	return command
 }
 
 func (suite *ExpenseServiceTestSuite) getExpenseType() *models.ExpenseType {

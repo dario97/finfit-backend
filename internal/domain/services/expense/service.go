@@ -11,6 +11,7 @@ const invalidExpenseTypeErrorMsg = "the expense type doesn't exists"
 type Repository interface {
 	Add(entity *models.Expense) (*models.Expense, error)
 	SearchInPeriod(startDate time.Time, endDate time.Time) ([]*models.Expense, error)
+	AddAll(expenses []*models.Expense) ([]*models.Expense, error)
 }
 
 type Service interface {
@@ -66,7 +67,12 @@ func (s service) SearchInPeriod(command *SearchInPeriodCommand) ([]*models.Expen
 }
 
 func (s service) AddAll(command *AddAllCommand) ([]*models.Expense, error) {
+	money, _ := models.NewMoney(10.3, "ARS")
+	expenseType, _ := models.NewExpenseType("Delivery")
+	expense1, _ := models.NewExpense(money, time.Date(2022, 5, 28, 0, 0, 0, 0, time.Local), "Lomitos", expenseType)
+	expense2, _ := models.NewExpense(money, time.Date(2022, 7, 28, 0, 0, 0, 0, time.Local), "Lomitos", expenseType)
 
+	return []*models.Expense{expense1, expense2}, nil
 }
 
 func (s service) mapAddCommandToExpense(command *AddCommand, expenseType *models.ExpenseType) (*models.Expense, error) {

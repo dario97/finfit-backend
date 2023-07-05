@@ -42,6 +42,11 @@ func (r *RepositoryMock) SearchInPeriod(startDate time.Time, endDate time.Time) 
 	}
 }
 
+func (r *RepositoryMock) AddAll(expenses []*models.Expense) ([]*models.Expense, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (r *RepositoryMock) MockAdd(callArguments, returnArguments []interface{}, times int) {
 	r.On("Add", callArguments...).Return(returnArguments...).Times(times)
 }
